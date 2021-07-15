@@ -1,0 +1,89 @@
+# Check LiteX's BUILD_DIRECTORY definition.
+
+BUILD_DIRECTORY ?= .
+ifeq ($(wildcard $(BUILD_DIRECTORY)/software/include/generated/variables.mak),)
+define ERROR_MSG
+
+The LiteX port of MicroPython relies on software files generated
+during the LiteX build. Please specify your build directory, ex:
+$ export BUILD_DIRECTORY=build/digilent_arty
+
+endef
+$(error $(ERROR_MSG))
+endif
+
+
+# Import LiteX's variables.mak
+include $(BUILD_DIRECTORY)/software/include/generated/variables.mak
+
+# Include the core environment definitions; this will set $(TOP).
+include ../../py/mkenv.mk
+
+# Include py core make definitions
+include $(TOP)/py/py.mk
+
+# Set Cross-Compiler.
+
+CROSS_COMPILE ?= $(TRIPLE)-
+
+# Set ASFLAGS / CFLAGS.
+
+ASFLAGS += -I$(BUILD_DIRECTORY)/software/include # For crt0.S.
+
+CFLAGS += $(CPUFLAGS)
+CFLAGS += $(INC) -Wall -Werror -std=gnu11 -ggdb $(COPT)
+CFLAGS += -Og -Wdouble-promotion -Wall -Werror
+
+# Set Include directories.
+INC += -I.
+INC += -I$(BUILD)
+INC += -I$(TOP)
+INC += -I$(BUILD_DIRECTORY)/software/include
+INC += -I$(SOC_DIRECTORY)/software/include
+INC += -I$(CPU_DIRECTORY)
+
+# Set LDFLAGS.
+LDFLAGS += -nostartfiles -T linker.ld -Wl,-Map=$@.map -Wl,--cref
+LDFLAGS += -L$(BUILDINC_DIRECTORY)
+LDFLAGS += $(filter -march=% -mabi=%, $(CPUFLAGS)) # CPU specific.
+
+# Set Libraries.
+LIBS = -Wl,-lc -Wl,-lm
+
+# Set Sources.
+SRC_C = \
+	main.c \
+	$(SOC_DIRECTORY)/software/libbase/uart.c \
+	isr.c \
+	modmachine.c \
+	modlitex.c \
+	litex_leds.c \
+	litex_switches.c \
+	lib/utils/stdout_helpers.c \
+	lib/utils/interrupt_char.c \
+	lib/utils/pyexec.c \
+	lib/mp-readline/readline.c
+
+CRT0_S ?= $(CPU_DIRECTORY)/crt0.S
+CRT0_O = $(BUILD)/software/libbase/crt0.o
+
+OBJ =  $(CRT0_O) $(addprefix $(BUILD)/, $(SRC_S:.S=.o)) $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+
+all: $(BUILD)/firmware.bin
+
+# List of sources for qstr extraction
+SRC_QSTR += $(SRC_C) $(SRC_LIB)
+
+# CRT0 override for normal assembler rule.
+$(CRT0_O): $(CRT0_S)
+	$(CC) -c $(ASFLAGS) $(CFLAGS) $(CRT0FLAGS) -o $@ $<
+
+$(BUILD)/firmware.elf: $(OBJ)
+	$(ECHO) "LINK $@"
+	$(Q)$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(Q)$(SIZE) $@
+
+$(BUILD)/firmware.bin: $(BUILD)/firmware.elf
+	$(Q)$(OBJCOPY) -O binary $^ $(BUILD)/firmware.bin
+
+include ../../py/mkrules.mk
