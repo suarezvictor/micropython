@@ -3,7 +3,13 @@
 
 // Receive single character, blocking until one is available.
 static inline int mp_hal_stdin_rx_chr(void) {
-    return uart_read();
+    char c;
+    c = uart_read();
+    /* \n to \r conversion for litex_term */
+    if (c == '\n')
+        return '\r';
+    else
+        return c;
 }
 
 // Send the string of given length.
