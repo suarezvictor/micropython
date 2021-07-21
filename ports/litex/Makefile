@@ -57,6 +57,7 @@ SRC_C = \
 	isr.c \
 	modmachine.c \
 	modlitex.c \
+	litex_pin.c \
 	litex_leds.c \
 	litex_switches.c \
 	lib/utils/stdout_helpers.c \

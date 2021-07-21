@@ -25,7 +25,7 @@ in [LiteX-Boards](https://github.com/litex-hub/litex-boards), in this example, w
 Arty board:
 
 ```bash
-$ python3 -m litex_boards.targets.digilent_arty --with-ethernet --build --load
+$ python3 -m litex_boards.targets.digilent_arty --with-ethernet --with-pmod-gpio --build --load
 ```
 This will build the FPGA SoC, generate the software headers, compile the BIOS/FPGA and load it to the board.
 
