@@ -157,11 +157,3 @@ mp_obj_type_t litex_pin_type = {
     .make_new = litex_pin_make_new,
     .locals_dict = (mp_obj_t)&litex_pin_locals_dict,
 };
-
-mp_hal_pin_obj_t mp_hal_get_pin_obj(mp_obj_t obj) {
-    if (!mp_obj_is_type(obj, &litex_pin_type)) {
-        mp_raise_ValueError(MP_ERROR_TEXT("expecting a Pin"));
-    }
-    litex_pin_obj_t *pin = MP_OBJ_TO_PTR(obj);
-    return pin->num;
-}
