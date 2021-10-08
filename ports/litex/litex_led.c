@@ -1,3 +1,5 @@
+// This file is Copyright (c) 2017-2021 Fupy/LiteX-MicroPython Developers
+// License: BSD-2-Clause
 
 #include "py/nlr.h"
 #include "py/obj.h"

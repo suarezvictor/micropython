@@ -1,3 +1,6 @@
+# This file is Copyright (c) 2017-2021 Fupy/LiteX-MicroPython Developers
+# License: BSD-2-Clause
+
 # Check LiteX's BUILD_DIRECTORY definition.
 
 BUILD_DIRECTORY ?= .

@@ -1,3 +1,6 @@
+// This file is Copyright (c) 2017-2021 Fupy/LiteX-MicroPython Developers
+// License: BSD-2-Clause
+
 #include "py/obj.h"
 
 extern const mp_obj_type_t litex_pin_type;

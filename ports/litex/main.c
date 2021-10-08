@@ -1,3 +1,6 @@
+// This file is Copyright (c) 2017-2021 Fupy/LiteX-MicroPython Developers
+// License: BSD-2-Clause
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
