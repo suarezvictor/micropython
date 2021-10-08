@@ -67,10 +67,21 @@ SRC_C = \
 	lib/utils/pyexec.c \
 	lib/mp-readline/readline.c
 
+DRIVERS_SRC_C = $(addprefix drivers/,\
+	bus/softspi.c \
+        )
+
+EXTMOD_SRC_C = $(addprefix extmod/,\
+	machine_spi.c \
+	machine_i2c.c \
+        )
+
 CRT0_S ?= $(CPU_DIRECTORY)/crt0.S
 CRT0_O = $(BUILD)/software/libbase/crt0.o
 
 OBJ =  $(CRT0_O) $(addprefix $(BUILD)/, $(SRC_S:.S=.o)) $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 
 all: $(BUILD)/firmware.bin
 

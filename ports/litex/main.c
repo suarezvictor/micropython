@@ -14,8 +14,18 @@
 
 #include "irq.h"
 #include "mphalport.h"
-
-#include <generated/csr.h>
+#include "modmachine.h"
+#ifdef CSR_GPIO_BASE
+mp_hal_pin_obj_t pin_find(mp_const_obj_t pin_in)
+{
+    // If pin is SMALL_INT
+    if (mp_obj_is_small_int(pin_in)) {
+        mp_hal_pin_obj_t value = MP_OBJ_SMALL_INT_VALUE(pin_in);
+        return value;
+    }
+  return -1;
+}
+#endif
 
 void mp_keyboard_interrupt()
 {

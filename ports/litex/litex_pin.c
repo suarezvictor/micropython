@@ -11,24 +11,26 @@
 
 #include <generated/csr.h>
 
-#define GPIO_MODE_IN  (0)
-#define GPIO_MODE_OUT (1)
+typedef enum {
+ GPIO_MODE_IN = 0,
+ GPIO_MODE_OUT = 1,
+} GPIO_MODE;
 
 #if !defined(CSR_GPIO_BASE)
-static inline unsigned char gpio_oe_read(void) {
+static inline uint8_t gpio_oe_read(void) {
     return 0;
 }
-static inline void gpio_oe_write(unsigned char value) {
+static inline void gpio_oe_write(uint8_t value) {
 }
 
-static inline unsigned char gpio_out_read(void) {
+static inline uint8_t gpio_out_read(void) {
     return 0;
 }
 
-static inline void gpio_out_write(unsigned char value) {
+static inline void gpio_out_write(uint8_t value) {
 }
 
-static inline unsigned char gpio_in_read(void) {
+static inline uint8_t gpio_in_read(void) {
     return 0;
 }
 #endif
@@ -37,21 +39,21 @@ mp_obj_type_t litex_pin_type;
 
 typedef struct _litex_pin_obj_t {
     mp_obj_base_t base;
-    uint8_t mode;
+    GPIO_MODE mode;
     uint32_t num;
 } litex_pin_obj_t;
 
 /* FIXME : Start simple with 8 fixed IOs, we'll generalize/expand it later */
 
 STATIC litex_pin_obj_t litex_pin_obj[8] = {
-    {{&litex_pin_type}, 0},
-    {{&litex_pin_type}, 1},
-    {{&litex_pin_type}, 2},
-    {{&litex_pin_type}, 3},
-    {{&litex_pin_type}, 4},
-    {{&litex_pin_type}, 5},
-    {{&litex_pin_type}, 6},
-    {{&litex_pin_type}, 7}
+    {{&litex_pin_type}, GPIO_MODE_IN, 0},
+    {{&litex_pin_type}, GPIO_MODE_IN, 1},
+    {{&litex_pin_type}, GPIO_MODE_IN, 2},
+    {{&litex_pin_type}, GPIO_MODE_IN, 3},
+    {{&litex_pin_type}, GPIO_MODE_IN, 4},
+    {{&litex_pin_type}, GPIO_MODE_IN, 5},
+    {{&litex_pin_type}, GPIO_MODE_IN, 6},
+    {{&litex_pin_type}, GPIO_MODE_IN, 7}
 };
 
 void litex_pin_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
@@ -67,8 +69,6 @@ void litex_pin_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t 
 STATIC mp_obj_t litex_pin_obj_init_helper(litex_pin_obj_t *self, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     enum { ARG_mode, ARG_pull, ARG_value, ARG_alt };
 
-    char oe    = gpio_oe_read();
-
     /* Init API: pin.init(mode=0) */
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_mode,  MP_ARG_INT, {.u_rom_obj = MP_ROM_INT(0)}},
@@ -79,13 +79,18 @@ STATIC mp_obj_t litex_pin_obj_init_helper(litex_pin_obj_t *self, size_t n_args, 
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
     /* Configure mode */
-    oe = gpio_oe_read();
+    //TODO: should use LiteX SDK
+    uint8_t oe = gpio_oe_read();
     oe = (oe & ~(1 << self->num));
     if (args[ARG_mode].u_int == GPIO_MODE_OUT) {
         oe |= (1 << self->num);
     }
     self->mode = args[ARG_mode].u_int;
     gpio_oe_write(oe);
+
+#ifdef _DEBUG
+    printf("in litex_pin_obj_init_helper(), pin=%d, mode=%s, oe=0x%X\n", (int)self->num, self->mode == GPIO_MODE_IN ? "IN" : "OUT", oe);
+#endif
 
     return mp_const_none;
 }
@@ -106,6 +111,9 @@ STATIC mp_obj_t litex_pin_make_new(const mp_obj_type_t *type_in,
     default:
         mp_raise_ValueError("Invalid PIN");
     }
+#ifdef _DEBUG
+    printf("in litex_pin_make_new(), arg pin=%d, obj pin=%d\n", pin_num, (int) self->num);
+#endif
 
     /* Configure PIN */
     if (n_args > 1 || n_kw > 0) {
@@ -118,16 +126,18 @@ STATIC mp_obj_t litex_pin_make_new(const mp_obj_type_t *type_in,
 }
 
 STATIC mp_obj_t litex_pin_value(mp_obj_t self_in) {
-    litex_pin_obj_t *pin = self_in;
+    litex_pin_obj_t *pin = (litex_pin_obj_t *) self_in;
     bool state = gpio_in_read() & (1 << pin->num);
-
     return mp_obj_new_bool(state);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(litex_pin_value_obj, litex_pin_value);
 
 STATIC mp_obj_t litex_pin_high(mp_obj_t self_in) {
-    litex_pin_obj_t *pin = self_in;
-    char value = gpio_out_read();
+    litex_pin_obj_t *pin = (litex_pin_obj_t *) self_in;
+    uint8_t value = gpio_out_read();
+#ifdef _DEBUG
+    printf("in litex_pin_high(), pin=%d\n", (int) pin->num);
+#endif
 
     gpio_out_write(value | (1 << pin->num));
 
@@ -136,8 +146,11 @@ STATIC mp_obj_t litex_pin_high(mp_obj_t self_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(litex_pin_high_obj, litex_pin_high);
 
 STATIC mp_obj_t litex_pin_low(mp_obj_t self_in) {
-    litex_pin_obj_t *pin = self_in;
-    char value = gpio_out_read();
+    litex_pin_obj_t *pin = (litex_pin_obj_t *) self_in;
+    uint8_t value = gpio_out_read();
+#ifdef _DEBUG
+    printf("in litex_pin_low(), pin=%d\n", (int) pin->num);
+#endif
 
     gpio_out_write(value & ~(1 << pin->num));
 
