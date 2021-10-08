@@ -62,6 +62,7 @@ SRC_C = \
 	modlitex.c \
 	litex_pin.c \
 	litex_led.c \
+	machine_pwm.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/interrupt_char.c \
 	lib/utils/pyexec.c \
