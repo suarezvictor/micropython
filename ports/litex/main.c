@@ -15,6 +15,19 @@
 #include "irq.h"
 #include "mphalport.h"
 #include "modmachine.h"
+
+//TODO: move misc functions to other module (i.e. future LiteX SDK implementation)
+#ifdef CSR_TIMER0_UPTIME_CYCLES_ADDR
+void litex_delay_cycles(uint64_t c)
+{
+  timer0_uptime_latch_write(1);
+  uint64_t t1 = timer0_uptime_cycles_read() + c;
+  //printf("us=%d, e=%ld, f=%d\n", us, (long)c, CONFIG_CLOCK_FREQUENCY);
+  while((int64_t)(timer0_uptime_cycles_read() - t1) < 0)
+    timer0_uptime_latch_write(1);
+
+}
+#endif
 #ifdef CSR_GPIO_BASE
 mp_hal_pin_obj_t pin_find(mp_const_obj_t pin_in)
 {
@@ -84,6 +97,11 @@ int main(int argc, char **argv) {
     #else
     pyexec_frozen_module("frozentest.py");
     #endif
+
+#ifdef CSR_TIMER0_UPTIME_CYCLES_ADDR
+    machine_timer_deinit_all();
+#endif
+
     mp_deinit();
     return 0;
 }

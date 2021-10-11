@@ -4,13 +4,22 @@
 #include <generated/csr.h>
 #include <irq.h>
 #include <uart.h>
+#include <timer.h>
 
 void isr(void)
 {
 	unsigned int irqs;
 
 	irqs = irq_pending() & irq_getmask();
+#ifdef TIMER0_INTERRUPT
+#ifndef TIMER0_POLLING
+	if(irqs & (1 << TIMER0_INTERRUPT))
+		timer0_isr();
+#endif
+#endif
 
+#ifdef UART_INTERRUPT
 	if(irqs & (1 << UART_INTERRUPT))
 		uart_isr();
+#endif
 }

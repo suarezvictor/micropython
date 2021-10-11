@@ -77,8 +77,14 @@ mp_hal_pin_obj_t pin_find(const void *pin_in);
 
 #endif
 
+#ifdef CSR_TIMER0_UPTIME_CYCLES_ADDR
+void litex_delay_cycles(uint64_t c); //TODO: maybe a faster implementation can be limited to 32 bits
+static inline void mp_hal_delay_us_fast(mp_uint_t us) {  uint64_t c = us; c *= CONFIG_CLOCK_FREQUENCY; c /= 1000000; litex_delay_cycles(c); }
+#else
 static inline void mp_hal_delay_us_fast(mp_uint_t us) { us*=4; volatile static uint8_t t; while(us--) ++t; }
-#define mp_hal_delay_us(us) mp_hal_delay_us_fast(us)
+#endif
+#define mp_hal_delay_us(us)   mp_hal_delay_us_fast(us)
+
 
 // Extra built in names to add to the global namespace
 #define MICROPY_PORT_BUILTINS \
@@ -107,5 +113,13 @@ extern const struct _mp_obj_module_t mp_module_litex;
 
 #define MP_STATE_PORT MP_STATE_VM
 
+#ifdef CSR_TIMER0_BASE
+#define MICROPY_ENABLE_SCHEDULER                (1)
+
+#define MICROPY_PORT_ROOT_POINTERS \
+    struct _machine_timer_obj_t *machine_timer_obj_head; \
+    const char *readline_hist[8];
+#else
 #define MICROPY_PORT_ROOT_POINTERS \
     const char *readline_hist[8];
+#endif //CSR_TIMER0_BASE
