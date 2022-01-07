@@ -1,4 +1,5 @@
 // This file is Copyright (c) 2021 Fupy/LiteX-MicroPython Developers
+// This file is Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
 // License: BSD-2-Clause
 
 #ifndef MICROPY_INCLUDED_LITEX_MODMACHINE_H

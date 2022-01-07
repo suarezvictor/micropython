@@ -8,6 +8,7 @@
  * Copyright (c) 2013-2015 Damien P. George
  * Copyright (c) 2016 Paul Sokolovsky
  * Copyright (c) 2021 Fupy/LiteX-MicroPython Developers
+ * Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
