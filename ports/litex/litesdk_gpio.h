@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Enjoy-Digital <florent@enjoy-digital.fr> (author: Victor Suarez Rovere <suarezvictor@gmail.com>)
+ * Copyright (C) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
 */
 
 #ifndef __LITESDK_GPIO_H_

@@ -67,6 +67,7 @@ SRC_C = \
 	litex_led.c \
 	machine_timer.c \
 	machine_pwm.c \
+	machine_pin.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/interrupt_char.c \
 	lib/utils/pyexec.c \

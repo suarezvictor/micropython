@@ -42,48 +42,6 @@ typedef long      mp_off_t;
 #define MICROPY_HW_SDRAM_SIZE MAIN_RAM_SIZE
 #endif
 
-// C-level pin HAL
-#define MP_HAL_PIN_FMT "%u"
-#define mp_hal_pin_name(p)      (p)
-
-#ifdef CSR_GPIO_BASE
-#if CSR_GPIO_OE_SIZE > 1
-typedef uint64_t csr_gpio_t; //up to 64 pins supported as defined in software/include/generated/csr.h (uint64_t type)
-#else
-typedef uint32_t csr_gpio_t;
-#endif
-#define csr_1 ((csr_gpio_t)1)
-#define csr_pin_set(v, p) ((v) | (csr_1 << (p)))
-#define csr_pin_clear(v, p) ((v) & ~(csr_1 << (p)))
-#define csr_pin_read(v, p) (((v) & (csr_1 << (p))) != 0)
-
-#define mp_hal_pin_obj_t uint8_t
-
-#define mp_hal_pin_input(p)     gpio_oe_write(csr_pin_clear(gpio_oe_read(), p))
-#define mp_hal_pin_output(p)    gpio_oe_write(csr_pin_set(gpio_oe_read(), p))
-#define mp_hal_pin_low(p)       gpio_out_write(csr_pin_clear(gpio_out_read(), p))
-#define mp_hal_pin_high(p)      gpio_out_write(csr_pin_set(gpio_out_read(), p))
-#define mp_hal_pin_read(p)      csr_pin_read(gpio_in_read(), p)
-#define mp_hal_pin_write(p, v)  ((v) ? mp_hal_pin_high(p) : mp_hal_pin_low(p)) //TODO: write a more time-deterministic implementation:
-//#define csr_pin_write(v, p, bit) (csr_pin_clear(v, p) | (((csr_gpio_t)bit) << (p)))
-
-#define mp_hal_pin_open_drain(p) (mp_hal_pin_input(p), mp_hal_pin_low(p)) //assumes hardware pullup (external resistor or FPGA pin configuration)
-#define mp_hal_pin_od_low(p)    mp_hal_pin_output(p)
-#define mp_hal_pin_od_high(p)   mp_hal_pin_input(p)
-
-mp_hal_pin_obj_t pin_find(const void *pin_in);
-#define mp_hal_get_pin_obj(o) pin_find(o)
-#define machine_pin_get_id(o) mp_hal_get_pin_obj(o)
-
-#else
-//no GPIO enabled in SoC definition
-#define mp_hal_pin_input(p)
-#define mp_hal_pin_output(p)
-#define mp_hal_pin_open_drain(p)
-#define mp_hal_pin_od_low(p)
-#define mp_hal_pin_od_high(p)
-#define machine_pin_get_id(o) 0
-#endif
 
 #define TIMER0_POLLING //interrupt handing not enabled yet
 #ifdef CSR_TIMER0_UPTIME_LATCH_ADDR
