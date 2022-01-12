@@ -69,15 +69,29 @@ static char *stack_top;
 extern char _edata_rom, _emain_ram;
 #endif
 
+void NORETURN hard_reset() { ctrl_reset_write(1); for(;;); } //TODO: move to SDK
+int upython_main(int argc, char **argv);
 
 int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
+    //safe way to determine stack top: no other variables in this function //TODO: use alloca()
 
     irq_setmask(0);
     irq_setie(1);
     uart_init();
 
+    while(upython_main(argc, argv) == 0)
+        /*soft_reset()*/;
+
+    irq_setie(0);
+    irq_setmask(~0);
+
+    hard_reset();
+}
+
+int upython_main(int argc, char **argv)
+{
 #if MICROPY_ENABLE_GC
     {
 #ifdef MICROPY_HW_SDRAM_SIZE
@@ -100,28 +114,54 @@ int main(int argc, char **argv) {
 
     mp_init();
     #if MICROPY_ENABLE_COMPILER
-    #if MICROPY_REPL_EVENT_DRIVEN
+    #if !MICROPY_REPL_EVENT_DRIVEN
+    for (;;)
+    {
+        int resp;
+        if(pyexec_mode_kind == PYEXEC_MODE_RAW_REPL)
+            resp = pyexec_raw_repl();
+        else
+            resp = pyexec_friendly_repl();
+
+        switch(resp)
+        {
+            case 0: continue;
+            case PYEXEC_FORCED_EXIT: //CTRL-D, do soft reset
+                break;
+            default:
+                return -1; //do hard reset
+        }
+        break;
+    }
+    #else
+    #error MICROPY_REPL_EVENT_DRIVEN is not tested!
     pyexec_event_repl_init();
-    for (;;) {
+    for (;;)
+    {
         int c = mp_hal_stdin_rx_chr();
         if (pyexec_event_repl_process_char(c)) {
             break;
         }
     }
-    #else
-    pyexec_friendly_repl();
     #endif
-    // do_str("print('hello world!', list(x+1 for x in range(10)), end='eol\\n')", MP_PARSE_SINGLE_INPUT);
-    // do_str("for i in range(10):\r\n  print(i)", MP_PARSE_FILE_INPUT);
     #else
-    pyexec_frozen_module("frozentest.py");
+    #error not enabling MICROPY_ENABLE_COMPILER is not tested!
     #endif
+
+
 
 #ifdef CSR_TIMER0_UPTIME_CYCLES_ADDR
     machine_timer_deinit_all();
 #endif
 
+    gc_sweep_all();
+    mp_hal_stdout_tx_strn("MPY: soft reboot\r\n", 18);
+    mp_hal_delay_us(10000); // allow UART to flush output
     mp_deinit();
+    #if MICROPY_REPL_EVENT_DRIVEN
+    pyexec_event_repl_init();
+    #endif
+
     return 0;
 }
 
