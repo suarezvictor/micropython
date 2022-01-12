@@ -58,7 +58,6 @@ LIBS = -Wl,-lc -Wl,-lm
 # Set Sources.
 SRC_C = \
 	main.c \
-	$(SOC_DIRECTORY)/software/libbase/uart.c \
 	isr.c \
 	modmachine.c \
 	modutime.c \
@@ -73,6 +72,14 @@ SRC_C = \
 	lib/utils/pyexec.c \
         lib/timeutils/timeutils.c \
 	lib/mp-readline/readline.c
+
+#lib sources with no need of QSTR extraction
+SRC_LITEX = \
+	$(LIBBASE_DIRECTORY)/system.c \
+	$(LIBBASE_DIRECTORY)/uart.c \
+
+
+SRC_C += $(SRC_MOD)
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
 	bus/softspi.c \
@@ -89,6 +96,7 @@ CRT0_O = $(BUILD)/software/libbase/crt0.o
 OBJ =  $(CRT0_O) $(addprefix $(BUILD)/, $(SRC_S:.S=.o)) $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_LITEX:.c=.o))
 
 all: $(BUILD)/firmware.bin
 
