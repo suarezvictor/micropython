@@ -34,6 +34,13 @@ typedef long      mp_off_t;
 
 
 #include <generated/csr.h>
+#include <generated/mem.h>
+
+#ifdef MAIN_RAM_BASE
+#define MICROPY_HW_SDRAM_AVAIL (1)
+#define MICROPY_HW_SDRAM_BASE MAIN_RAM_BASE
+#define MICROPY_HW_SDRAM_SIZE MAIN_RAM_SIZE
+#endif
 
 // C-level pin HAL
 #define MP_HAL_PIN_FMT "%u"

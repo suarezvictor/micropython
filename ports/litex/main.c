@@ -17,7 +17,8 @@
 #include "mphalport.h"
 #include "modmachine.h"
 
-//TODO: move misc functions to other module (i.e. future LiteX SDK implementation)
+extern uint8_t _start, _fstack; //linker variables
+
 #ifdef CSR_TIMER0_UPTIME_CYCLES_ADDR
 void litex_delay_cycles(uint64_t c)
 {
@@ -64,8 +65,8 @@ void do_str(const char *src, mp_parse_input_kind_t input_kind) {
 #endif
 
 static char *stack_top;
-#if MICROPY_ENABLE_GC
-static char heap[4096];
+#ifdef MICROPY_HW_SDRAM_AVAIL
+extern char _edata_rom, _emain_ram;
 #endif
 
 
@@ -77,9 +78,26 @@ int main(int argc, char **argv) {
     irq_setie(1);
     uart_init();
 
-    #if MICROPY_ENABLE_GC
-    gc_init(heap, heap + sizeof(heap));
-    #endif
+#if MICROPY_ENABLE_GC
+    {
+#ifdef MICROPY_HW_SDRAM_SIZE
+        void *heap_start = &_edata_rom, *heap_end = &_emain_ram; //TODO: move this logic to the C SDK
+        #ifdef CSR_VIDEO_FRAMEBUFFER_BASE
+        #warning A ram region for the video framebuffer should be allocated in linker scripts
+        if(heap_start <= (void*)CSR_VIDEO_FRAMEBUFFER_BASE && heap_last > (void*)CSR_VIDEO_FRAMEBUFFER_BASE)
+            heap_end = (void*)CSR_VIDEO_FRAMEBUFFER_BASE); //check if framebuffer overlaps
+        #endif
+        #ifdef _DEBUG        
+        printf("RAM base at 0x%p, heap at 0x%p, end=0x%p (%d KiB)\n", (void *)MICROPY_HW_SDRAM_BASE, heap_start, heap_end, ((char*)heap_end-(char*)heap_start)/1024);
+        #endif
+        gc_init(heap_start, heap_end);
+#else
+        static uint8_t heap[4096];
+        gc_init(heap, heap + sizeof(heap));
+#endif
+    }
+#endif
+
     mp_init();
     #if MICROPY_ENABLE_COMPILER
     #if MICROPY_REPL_EVENT_DRIVEN
