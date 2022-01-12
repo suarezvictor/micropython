@@ -36,6 +36,7 @@
 #include "modmachine.h"
 #include "mphalport.h"
 
+#ifdef CSR_LEDS_PWM_ENABLE_ADDR //TODO: change led control to general PWM array when implemented
 // Forward dec'l
 extern const mp_obj_type_t machine_pwm_type;
 
@@ -45,6 +46,7 @@ typedef struct _pwm_obj_t {
     uint8_t active;
     uint8_t channel;
 } pwm_obj_t;
+#endif
 
 #ifdef ESP32 //see notes in machine_hw_spi.c about reusing code from ESP32 port
 // Which channel has which GPIO pin assigned?

@@ -24,6 +24,7 @@
 #define MICROPY_PY_MACHINE_SPI_MSB          (1)
 #define MICROPY_PY_MACHINE_SPI_LSB          (0)
 #define MICROPY_PY_MACHINE_I2C              (1)
+#define MICROPY_PY_UTIME_MP_HAL             (1)
 
 // Type definitions for the specific machine
 
@@ -33,6 +34,13 @@ typedef long      mp_off_t;
 
 
 #include <generated/csr.h>
+#include <generated/mem.h>
+
+#ifdef MAIN_RAM_BASE
+#define MICROPY_HW_SDRAM_AVAIL (1)
+#define MICROPY_HW_SDRAM_BASE MAIN_RAM_BASE
+#define MICROPY_HW_SDRAM_SIZE MAIN_RAM_SIZE
+#endif
 
 // C-level pin HAL
 #define MP_HAL_PIN_FMT "%u"
@@ -75,7 +83,15 @@ mp_hal_pin_obj_t pin_find(const void *pin_in);
 #define mp_hal_pin_od_low(p)
 #define mp_hal_pin_od_high(p)
 #define machine_pin_get_id(o) 0
+#endif
 
+#define TIMER0_POLLING //interrupt handing not enabled yet
+#ifdef CSR_TIMER0_UPTIME_LATCH_ADDR
+//TODO: use SDK
+static inline uint64_t litex_uptime() {  timer0_uptime_latch_write(1); return timer0_uptime_cycles_read(); }
+#else
+//calibrated for sleep_ms / sleep
+static inline uint64_t litex_uptime() { static uint64_t uptime = 0; return uptime+=250; }
 #endif
 
 #ifdef CSR_TIMER0_UPTIME_CYCLES_ADDR
@@ -93,9 +109,11 @@ static inline void mp_hal_delay_us_fast(mp_uint_t us) { us*=4; volatile static u
 
 extern const struct _mp_obj_module_t mp_module_machine;
 extern const struct _mp_obj_module_t mp_module_litex;
+extern const struct _mp_obj_module_t mp_module_utime;
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&mp_module_machine) }, \
     { MP_ROM_QSTR(MP_QSTR_litex),    MP_ROM_PTR(&mp_module_litex)   }, \
+    { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, \
 
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
