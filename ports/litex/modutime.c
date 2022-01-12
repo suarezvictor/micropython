@@ -29,8 +29,12 @@
 #include "py/runtime.h"
 #include "extmod/utime_mphal.h"
 #include "lib/timeutils/timeutils.h"
-#include "litesdk_timer.h"
 
+void timer0_isr(void) {} //FIXME temp hack to use time functions
+#define LITETIMER_PERIOD_FROM_CYCLES64(c, mult) (uint32_t) (c*(uint64_t)mult/CONFIG_CLOCK_FREQUENCY)
+#ifndef CSR_TIMER0_UPTIME_LATCH_ADDR
+#warning CSR_TIMER0_UPTIME_LATCH_ADDR should be defined, use --timer-uptime at SoC generation
+#endif
 
 mp_uint_t mp_hal_ticks_us(void)
 {

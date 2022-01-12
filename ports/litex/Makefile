@@ -1,4 +1,5 @@
 # This file is Copyright (c) 2017-2021 Fupy/LiteX-MicroPython Developers
+# Copyright (c) 2021-2022 Victor Suarez Rovere <suarezvictor@gmail.com>
 # License: BSD-2-Clause
 
 # Check LiteX's BUILD_DIRECTORY definition.
@@ -34,8 +35,9 @@ CROSS_COMPILE ?= $(TRIPLE)-
 ASFLAGS += -I$(BUILD_DIRECTORY)/software/include # For crt0.S.
 
 CFLAGS += $(CPUFLAGS)
-CFLAGS += $(INC) -Wall -Werror -std=gnu11 -ggdb $(COPT)
-CFLAGS += -Og -Wdouble-promotion -Wall -Werror
+#CFLAGS += $(INC) -Wall -Werror -std=gnu11 -ggdb $(COPT)
+CFLAGS += $(INC) -Wall -Wno-error -std=gnu11 -ggdb $(COPT)
+CFLAGS += -Og -Wdouble-promotion
 
 # Set Include directories.
 INC += -I.
@@ -59,6 +61,7 @@ SRC_C = \
 	$(SOC_DIRECTORY)/software/libbase/uart.c \
 	isr.c \
 	modmachine.c \
+	modutime.c \
 	modlitex.c \
 	litex_pin.c \
 	litex_led.c \
@@ -67,6 +70,7 @@ SRC_C = \
 	lib/utils/stdout_helpers.c \
 	lib/utils/interrupt_char.c \
 	lib/utils/pyexec.c \
+        lib/timeutils/timeutils.c \
 	lib/mp-readline/readline.c
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
