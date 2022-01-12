@@ -96,11 +96,6 @@ int upython_main(int argc, char **argv)
     {
 #ifdef MICROPY_HW_SDRAM_SIZE
         void *heap_start = &_edata_rom, *heap_end = &_emain_ram; //TODO: move this logic to the C SDK
-        #ifdef CSR_VIDEO_FRAMEBUFFER_BASE
-        #warning A ram region for the video framebuffer should be allocated in linker scripts
-        if(heap_start <= (void*)CSR_VIDEO_FRAMEBUFFER_BASE && heap_last > (void*)CSR_VIDEO_FRAMEBUFFER_BASE)
-            heap_end = (void*)CSR_VIDEO_FRAMEBUFFER_BASE); //check if framebuffer overlaps
-        #endif
         #ifdef _DEBUG        
         printf("RAM base at 0x%p, heap at 0x%p, end=0x%p (%d KiB)\n", (void *)MICROPY_HW_SDRAM_BASE, heap_start, heap_end, ((char*)heap_end-(char*)heap_start)/1024);
         #endif
