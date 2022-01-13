@@ -7,6 +7,7 @@
 #include <uart.h>
 #include <timer.h>
 
+#ifdef CONFIG_CPU_HAS_INTERRUPT
 void isr(void)
 {
 	unsigned int irqs;
@@ -24,3 +25,8 @@ void isr(void)
 		uart_isr();
 #endif
 }
+
+#else
+#warning SoC should have interrupts enabled
+void isr(void) {}
+#endif

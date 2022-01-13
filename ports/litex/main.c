@@ -24,6 +24,8 @@
 extern uint8_t _start, _fstack; //linker variables
 
 #ifdef CSR_TIMER0_UPTIME_CYCLES_ADDR
+//TODO: move misc functions to other module (i.e. use LiteX SDK implementation)
+//TODO: implement litex_delay_cycles in SDK
 void litex_delay_cycles(uint64_t c)
 {
   timer0_uptime_latch_write(1);
@@ -37,7 +39,7 @@ void litex_delay_cycles(uint64_t c)
 
 void mp_keyboard_interrupt()
 {
-MP_STATE_VM(mp_kbd_exception) = (MP_STATE_PORT(mp_kbd_exception));
+    MP_STATE_VM(mp_kbd_exception) = (MP_STATE_PORT(mp_kbd_exception));
 }
 
 #if MICROPY_ENABLE_COMPILER
@@ -338,3 +340,8 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
     __fatal_error("Assertion failed");
 }
 #endif
+
+#ifndef CSR_TIMER0_UPTIME_CYCLES_ADDR
+#warning DELAY FUNCTION IS NOT ACCURATE, use uptime method (--timer-uptime option at SoC generation)
+#endif
+
