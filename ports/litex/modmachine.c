@@ -31,9 +31,9 @@ STATIC mp_obj_t machine_identifier(void) {
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_identifier_obj, machine_identifier);
 
-STATIC mp_obj_t machine_reset(void) {
+STATIC NORETURN mp_obj_t machine_reset(void) {
     ctrl_reset_soc_rst_write(1);
-    return mp_const_none;
+    for(;;);
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_reset_obj, machine_reset);
 

@@ -96,6 +96,61 @@ LITEX_OFFSET_ASSERT(CSR_GPIO, litegpio_t, IN);
 LITEX_OFFSET_ASSERT(CSR_GPIO, litegpio_t, OUT);
 #endif //CSR_GPIO_BASE
 
+///////////////////////////////
+// DMA Writer
+///////////////////////////////
 
+#ifdef CSR_DMA_WRITER_BASE
+#define LITEDMA_WRITER_ENABLED
+#define LITEDMAWRITER_READ(s, field)		LITECSR_READ(CSR_DMA_WRITER, s, field)
+#define LITEDMAWRITER_WRITE(s, field, v)	LITECSR_WRITE(CSR_DMA_WRITER, s, field, v)
+typedef LITECSR(CSR_DMA_WRITER_BASE_SIZE) 	litedma_writer_base_t;
+typedef LITECSR(CSR_DMA_WRITER_LENGTH_SIZE)	litedma_writer_length_t;
+typedef LITECSR(CSR_DMA_WRITER_ENABLE_SIZE)	litedma_writer_enable_t;
+typedef LITECSR(CSR_DMA_WRITER_DONE_SIZE)	litedma_writer_done_t;
+typedef LITECSR(CSR_DMA_WRITER_LOOP_SIZE)	litedma_writer_loop_t;
+typedef LITECSR(CSR_DMA_WRITER_OFFSET_SIZE)	litedma_writer_offset_t;
+
+typedef struct LITEX_PACKED32 //fields arrangement must mach order to get exact peripheral layout
+{
+  litedma_writer_base_t		BASE;
+  litedma_writer_length_t	LENGTH;
+  litedma_writer_enable_t	ENABLE;
+  litedma_writer_done_t 	DONE;
+  litedma_writer_loop_t 	LOOP;
+  litedma_writer_offset_t	OFFSET;
+} litedma_writer_t;
+//TODO: do offset checking with macro LITEX_OFFSET_ASSERT
+
+#endif //CSR_DMA_WRITER_BASE
+
+
+///////////////////////////////
+// DMA Reader
+///////////////////////////////
+
+#ifdef CSR_DMA_READER_BASE
+#define LITEDMA_READER_ENABLED
+#define LITEDMAREADER_READ(s, field)		LITECSR_READ(CSR_DMA_READER, s, field)
+#define LITEDMAREADER_WRITE(s, field, v)	LITECSR_WRITE(CSR_DMA_READER, s, field, v)
+typedef LITECSR(CSR_DMA_READER_BASE_SIZE) 	litedma_reader_base_t;
+typedef LITECSR(CSR_DMA_READER_LENGTH_SIZE)	litedma_reader_length_t;
+typedef LITECSR(CSR_DMA_READER_ENABLE_SIZE)	litedma_reader_enable_t;
+typedef LITECSR(CSR_DMA_READER_DONE_SIZE)	litedma_reader_done_t;
+typedef LITECSR(CSR_DMA_READER_LOOP_SIZE)	litedma_reader_loop_t;
+typedef LITECSR(CSR_DMA_READER_OFFSET_SIZE)	litedma_reader_offset_t;
+
+typedef struct LITEX_PACKED32 //fields arrangement must mach order to get exact peripheral layout
+{
+  litedma_reader_base_t		BASE;
+  litedma_reader_length_t	LENGTH;
+  litedma_reader_enable_t	ENABLE;
+  litedma_reader_done_t		DONE;
+  litedma_reader_loop_t		LOOP;
+  litedma_reader_offset_t	OFFSET;
+} litedma_reader_t;
+//TODO: do offset checking with macro LITEX_OFFSET_ASSERT
+
+#endif //CSR_DMA_READER_BASE
 
 #endif //__LITESDK_CSR_DEFS__H_
