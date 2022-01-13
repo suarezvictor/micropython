@@ -8,6 +8,7 @@ extern const mp_obj_type_t litex_pin_type;
 extern const mp_obj_type_t litex_led_type;
 extern const mp_obj_type_t litex_dmawriter_type;
 extern const mp_obj_type_t litex_dmareader_type;
+extern const mp_obj_type_t litex_video_type;
 
 STATIC const mp_rom_map_elem_t litex_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_litex) },
@@ -19,6 +20,9 @@ STATIC const mp_rom_map_elem_t litex_module_globals_table[] = {
 #endif
 #ifdef CSR_DMA_READER_BASE
     { MP_ROM_QSTR(MP_QSTR_DMAReader), MP_ROM_PTR(&litex_dmareader_type) },
+#endif
+#ifdef CSR_VIDEO_FRAMEBUFFER_BASE
+    { MP_ROM_QSTR(MP_QSTR_Video), MP_ROM_PTR(&litex_video_type) },
 #endif
 };
 

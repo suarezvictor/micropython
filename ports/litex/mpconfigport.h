@@ -42,6 +42,9 @@ typedef long      mp_off_t;
 #define MICROPY_HW_SDRAM_BASE MAIN_RAM_BASE
 #define MICROPY_HW_SDRAM_SIZE MAIN_RAM_SIZE
 #endif
+#ifdef CSR_VIDEO_FRAMEBUFFER_BASE
+#define MICROPY_PY_FRAMEBUF (1)
+#endif
 
 
 #define TIMER0_POLLING //interrupt handing not enabled yet
