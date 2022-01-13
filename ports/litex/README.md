@@ -12,12 +12,12 @@ Supported features:
 - Minimal litex support(leds, switches).
 
 Setting up LiteX
--------------------
+----------------
 
 To install LiteX, please follow the [LiteX installation guide](https://github.com/enjoy-digital/litex/wiki/Installation).
 
 Building your LiteX target
--------------------------------
+--------------------------
 The port of MicroPython to LiteX relies on the software files generated during the target build
 that will provides the hardware definition and mapping to MicroPython. To build the MicroPython
 firmware, the LiteX target then first needs to be generated. Many FPGA boards are already available
@@ -25,12 +25,12 @@ in [LiteX-Boards](https://github.com/litex-hub/litex-boards), in this example, w
 Arty board:
 
 ```bash
-$ python3 -m litex_boards.targets.digilent_arty --with-ethernet --with-pmod-gpio --build --load
+$ python3 -m litex_boards.targets.digilent_arty --with-ethernet --with-pmod-gpio --timer-uptime --build --load
 ```
 This will build the FPGA SoC, generate the software headers, compile the BIOS/FPGA and load it to the board.
 
 Building MicroPython for your LiteX target
-----------------------------------------------------
+------------------------------------------
 To build MicroPython for your LiteX target run:
 ```bash
 $ export BUILD_DIRECTORY=build/digilent_arty
@@ -38,7 +38,7 @@ $ make
 ```
 
 Loading MicroPython to your LiteX target
----------------------------------------------------
+----------------------------------------
 To load MicroPython for your LiteX target run:
 ```bash
 $ litex_term /dev/ttyUSBX --kernel=build/firmware.bin
@@ -50,3 +50,12 @@ $ cp build/firmware.bin /tftpboot/boot.bin
 And just let LiteX boot from it!...
 
 ..or use one of the other available boot methods described at https://github.com/enjoy-digital/litex/wiki/Load-Application-Code-To-CPU
+
+Execute examples in RAW-REPL mode (through Pyboard)
+---------------------------------------------------
+With Micropython firmware loaded on the SoC, examples can be run with:
+```bash
+$ ./pyboard.py -d /dev/ttyUSBX main.py
+$ ./pyboard.py -d /dev/ttyUSBX MACHINE_demo.py
+...
+```
