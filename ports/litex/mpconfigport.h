@@ -47,6 +47,45 @@ typedef long      mp_off_t;
 #endif
 
 
+#if MICROPY_VFS_FAT
+#define MICROPY_HW_ENABLE_SDCARD            (1)
+#define MICROPY_FATFS_RPATH            (2)
+#ifdef MICROPY_FATFS_RPATH
+#define FF_FS_RPATH (MICROPY_FATFS_RPATH)
+#else
+#define FF_FS_RPATH 0
+#endif
+
+// Whether to automatically mount (and boot from) the SD card if it's present
+#ifndef MICROPY_HW_SDCARD_MOUNT_AT_BOOT
+//#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (MICROPY_HW_ENABLE_SDCARD) //not enabled by default
+#endif
+
+#define MICROPY_FATFS_MULTI_PARTITION (1)
+#else //not MICROPY_VFS_FAT
+#undef MICROPY_VFS_FAT  //if there's no SD core, disable VFS fat
+#define MICROPY_VFS_FAT (0)
+#endif //MICROPY_VFS_FAT
+
+#if MICROPY_VFS_FAT
+#define MICROPY_VFS MICROPY_VFS_FAT
+#define MICROPY_PY_IO               (1)
+#define MICROPY_PY_IO_IOBASE        (1)
+#define MICROPY_PY_SYS_STDFILES     (1)
+#define MICROPY_PY_IO_FILEIO        (MICROPY_VFS_FAT || MICROPY_VFS_LFS1 || MICROPY_VFS_LFS2)
+#define mp_type_fileio mp_type_vfs_fat_fileio
+#define mp_type_textio mp_type_vfs_fat_textio
+#define MICROPY_FATFS_EXFAT         (1)
+#define MICROPY_FATFS_ENABLE_LFN    (1)
+// use vfs's functions for import stat and builtin open
+#define mp_import_stat mp_vfs_import_stat
+#define mp_builtin_open mp_vfs_open
+#define mp_builtin_open_obj mp_vfs_open_obj
+#endif
+#define MICROPY_READER_VFS              (MICROPY_VFS_FAT)
+
+#define MICROPY_PY_SYS_PLATFORM "LiteX (" CONFIG_BUS_STANDARD " bus)" //TODO: use board name from SoC generation
+
 #define TIMER0_POLLING //interrupt handing not enabled yet
 #ifdef CSR_TIMER0_UPTIME_LATCH_ADDR
 //TODO: use SDK
@@ -72,10 +111,12 @@ static inline void mp_hal_delay_us_fast(mp_uint_t us) { us*=4; volatile static u
 extern const struct _mp_obj_module_t mp_module_machine;
 extern const struct _mp_obj_module_t mp_module_litex;
 extern const struct _mp_obj_module_t mp_module_utime;
+extern const struct _mp_obj_module_t uos_module;
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&mp_module_machine) }, \
     { MP_ROM_QSTR(MP_QSTR_litex),    MP_ROM_PTR(&mp_module_litex)   }, \
     { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, \
+    { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&uos_module) }, \
 
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>

@@ -11,7 +11,11 @@
 #include "py/repl.h"
 #include "py/gc.h"
 #include "py/mperrno.h"
+#include "py/stream.h"
 #include "lib/utils/pyexec.h"
+
+#include "extmod/vfs.h"
+#include "extmod/vfs_fat.h"
 
 #include "irq.h"
 #include "mphalport.h"
@@ -68,6 +72,98 @@ static char *stack_top;
 #ifdef MICROPY_HW_SDRAM_AVAIL
 extern char _edata_rom, _emain_ram;
 #endif
+
+#if MICROPY_HW_SDCARD_MOUNT_AT_BOOT
+//FIXME: move logic to sdcard module
+void sdcard_init_vfs(fs_user_mount_t *vfs, int part);
+bool sdcard_is_present(void);
+STATIC bool init_sdcard_fs(void)
+{
+    //FIXME: not callable after soft reset...
+    bool first_part = true;
+    //if(first_part) return true; //already init
+
+    for (int part_num = 1; part_num <= 4; ++part_num) {
+        //printf("Trying partition %d\n", part_num);
+        // create vfs object
+        fs_user_mount_t *vfs_fat = m_new_obj_maybe(fs_user_mount_t);
+        mp_vfs_mount_t *vfs = m_new_obj_maybe(mp_vfs_mount_t);
+        if (vfs == NULL || vfs_fat == NULL) {
+            //printf("Error: No vfs nor vfs_fat\n");
+            break;
+        }
+        vfs_fat->blockdev.flags = MP_BLOCKDEV_FLAG_FREE_OBJ;
+        //printf("Calling sdcard_init_vfs()\n");
+        sdcard_init_vfs(vfs_fat, part_num);
+
+        // try to mount the partition
+        FRESULT res = f_mount(&vfs_fat->fatfs);
+
+        if (res != FR_OK) {
+            // couldn't mount
+            //printf("f_mount returns error: %d\n", res);
+            m_del_obj(fs_user_mount_t, vfs_fat);
+            m_del_obj(mp_vfs_mount_t, vfs);
+        } else {
+            // mounted via FatFs, now mount the SD partition in the VFS
+            if (first_part) {
+                // the first available partition is traditionally called "sd" for simplicity
+                vfs->str = "/sd";
+                vfs->len = 3;
+            } else {
+                // subsequent partitions are numbered by their index in the partition table
+                if (part_num == 2) {
+                    vfs->str = "/sd2";
+                } else if (part_num == 3) {
+                    vfs->str = "/sd3";
+                } else {
+                    vfs->str = "/sd4";
+                }
+                vfs->len = 4;
+            }
+            //printf("f_mount OK, mounted as: %s\n", vfs->str);
+            vfs->obj = MP_OBJ_FROM_PTR(vfs_fat);
+            vfs->next = NULL;
+#if 0
+//TODO: needs checking
+            for (mp_vfs_mount_t **m = &MP_STATE_VM(vfs_mount_table);; m = &(*m)->next) {
+                if (*m == NULL) {
+                    *m = vfs;
+                    break;
+                }
+            }
+#endif
+            {
+                if (first_part) {
+                    // use SD card as current directory
+                    MP_STATE_PORT(vfs_cur) = vfs;
+                    //printf("partition set as current directory\n", vfs->str);
+                }
+            }
+            first_part = false;
+            break; //done after first mount
+        }
+    }
+
+    if (first_part) {
+        //printf("MPY: can't mount SD card\n");
+        return false;
+    } 
+    //printf("MPY: SD card mounted!\n");
+    return true;
+}
+
+STATIC void deinit_sdcard_fs(void)
+{
+    //mp_vfs_mount_t cur = MP_STATE_PORT(vfs_cur);
+}
+
+#else //not MICROPY_HW_SDCARD_MOUNT_AT_BOOT
+#if MICROPY_HW_ENABLE_SDCARD
+#warning Mounting the SD card at boot is disabled, enable it by defining macro MICROPY_HW_SDCARD_MOUNT_AT_BOOT 
+#endif
+#endif
+
 
 void NORETURN hard_reset() { ctrl_reset_write(1); for(;;); } //TODO: move to SDK
 int upython_main(int argc, char **argv);
@@ -178,10 +274,14 @@ void gc_collect(void) {
 }
 #endif
 
+#if !MICROPY_READER_VFS
 mp_lexer_t *mp_lexer_new_from_file(const char *filename) {
+    //defined in case of not using the implementation in extmod/vfs_reader.c
     mp_raise_OSError(MP_ENOENT);
 }
+#endif
 
+#if !MICROPY_VFS
 mp_import_stat_t mp_import_stat(const char *path) {
     return MP_IMPORT_STAT_NO_EXIST;
 }
@@ -190,6 +290,7 @@ mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs) 
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(mp_builtin_open_obj, 1, mp_builtin_open);
+#endif
 
 void nlr_jump_fail(void *val) {
     while (1) {
@@ -201,6 +302,14 @@ void NORETURN __fatal_error(const char *msg) {
     while (1) {
         ;
     }
+}
+
+uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
+    uintptr_t ret = 0;
+    __fatal_error("mp_hal_stdio_poll not implemented");
+//    if ((poll_flags & MP_STREAM_POLL_RD) && stdin_ringbuf.iget != stdin_ringbuf.iput)
+//        ret |= MP_STREAM_POLL_RD;
+    return ret;
 }
 
 #ifndef NDEBUG
