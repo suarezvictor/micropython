@@ -1,4 +1,5 @@
 // This file is Copyright (c) 2017-2021 Fupy/LiteX-MicroPython Developers
+//Copyright (C) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
 // License: BSD-2-Clause
 
 #include <generated/csr.h>

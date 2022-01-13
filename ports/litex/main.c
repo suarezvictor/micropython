@@ -34,17 +34,6 @@ void litex_delay_cycles(uint64_t c)
 
 }
 #endif
-#ifdef CSR_GPIO_BASE
-mp_hal_pin_obj_t pin_find(mp_const_obj_t pin_in)
-{
-    // If pin is SMALL_INT
-    if (mp_obj_is_small_int(pin_in)) {
-        mp_hal_pin_obj_t value = MP_OBJ_SMALL_INT_VALUE(pin_in);
-        return value;
-    }
-  return -1;
-}
-#endif
 
 void mp_keyboard_interrupt()
 {
@@ -212,7 +201,33 @@ int upython_main(int argc, char **argv)
 #endif
 
     mp_init();
-    #if MICROPY_ENABLE_COMPILER
+    //printf("C stack at %p, original %p\n", stack_top, &_fstack);
+
+    #if MICROPY_HW_SDCARD_MOUNT_AT_BOOT
+    // if an SD card is present then mount it on /sd/
+    if (sdcard_is_present()) {
+        bool mounted_sdcard = init_sdcard_fs();
+        /*
+        printf("Mounting existing SD card at boot...\n");
+        if(mounted_sdcard)
+          printf("SD card mounted\n");
+        else
+          printf("SD card NOT mounted\n");
+        */
+
+        if(mounted_sdcard)
+        {
+            int resp = pyexec_file_if_exists("boot.py");
+            if (resp & PYEXEC_FORCED_EXIT)
+                return -1; //hard reset
+
+            pyexec_file_if_exists("main.py");
+        }
+    }
+    #endif
+
+
+#if MICROPY_ENABLE_COMPILER
     #if !MICROPY_REPL_EVENT_DRIVEN
     for (;;)
     {
@@ -243,11 +258,14 @@ int upython_main(int argc, char **argv)
         }
     }
     #endif
-    #else
-    #error not enabling MICROPY_ENABLE_COMPILER is not tested!
-    #endif
+#else
+#error not enabling MICROPY_ENABLE_COMPILER is not tested!
+#endif
 
 
+#if MICROPY_HW_SDCARD_MOUNT_AT_BOOT
+    deinit_sdcard_fs();
+#endif
 
 #ifdef CSR_TIMER0_UPTIME_CYCLES_ADDR
     machine_timer_deinit_all();
@@ -272,7 +290,7 @@ void gc_collect(void) {
     gc_collect_start();
     gc_collect_root(&dummy, ((mp_uint_t)stack_top - (mp_uint_t)&dummy) / sizeof(mp_uint_t));
     gc_collect_end();
-    gc_dump_info();
+    //gc_dump_info();
 }
 #endif
 
