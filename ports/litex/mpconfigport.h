@@ -46,6 +46,9 @@ typedef long      mp_off_t;
 #define MICROPY_PY_FRAMEBUF (1)
 #endif
 
+#if defined(CSR_SPI_BASE) || defined (CSR_SPI0_BASE)
+#define USE_HARDWARE_SPI
+#endif
 
 #if MICROPY_VFS_FAT
 #define MICROPY_HW_ENABLE_SDCARD            (1)

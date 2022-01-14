@@ -58,8 +58,15 @@
 #define USE_HARDWARE_SPI
 #else
 extern const mp_obj_type_t machine_hw_spi_type; //forward declaration
-#ifdef CSR_SPI0_BASE
-#define USE_HARDWARE_SPI
+#ifdef CSR_SPI_BASE
+//rename methdos: TODO: better, define a SDK module
+#define spi0_cs_write spi_cs_write
+#define spi0_cs_read spi_cs_read
+#define spi0_control_write spi_control_write
+#define spi0_status_read spi_status_read
+#define spi0_miso_read spi_miso_read
+#define spi0_mosi_write spi_mosi_write
+#define spi0_clk_divider_write spi_clk_divider_write
 #endif
 #endif
 
