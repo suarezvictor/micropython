@@ -29,7 +29,7 @@
 #include "py/runtime.h"
 #include "extmod/utime_mphal.h"
 #include "lib/timeutils/timeutils.h"
-#include "litesdk_timer.h"
+#include "liblitesdk/litesdk_timer.h"
 
 
 mp_uint_t mp_hal_ticks_us(void)

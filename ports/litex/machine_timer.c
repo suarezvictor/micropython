@@ -36,7 +36,7 @@
 #include "py/runtime.h"
 #include "modmachine.h"
 #include "mphalport.h"
-#include "litesdk_timer.h"
+#include "liblitesdk/litesdk_timer.h"
 
 #ifdef ESP32 //see notes in machine_hw_spi.c about reusing code from ESP32 port
 #include "driver/timer.h"

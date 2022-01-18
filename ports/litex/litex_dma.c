@@ -6,7 +6,7 @@
 #include "py/runtime.h"
 #include "py/objexcept.h"
 
-#include "litesdk_dma.h"
+#include "liblitesdk/litesdk_dma.h"
 
 #ifdef _DEBUG
 #include <stdio.h>

@@ -29,7 +29,7 @@ static inline void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
 
 // C-level pin HAL
 #include "py/obj.h"
-#include "litesdk_gpio.h"
+#include "liblitesdk/litesdk_gpio.h"
 
 #define MP_HAL_PIN_FMT "%u"
 #define mp_hal_pin_name(p)      (p)
