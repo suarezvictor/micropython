@@ -3,9 +3,9 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
  * Copyright (c) 2019 Damien P. George
  * Copyright (c) 2013, 2014 Damien P. George and 2017, 2018 Rami Ali
+ * Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,12 +29,8 @@
 #include "py/runtime.h"
 #include "extmod/utime_mphal.h"
 #include "lib/timeutils/timeutils.h"
+#include "litesdk_timer.h"
 
-void timer0_isr(void) {} //FIXME temp hack to use time functions
-#define LITETIMER_PERIOD_FROM_CYCLES64(c, mult) (uint32_t) (c*(uint64_t)mult/CONFIG_CLOCK_FREQUENCY)
-#ifndef CSR_TIMER0_UPTIME_LATCH_ADDR
-#warning CSR_TIMER0_UPTIME_LATCH_ADDR should be defined, use --timer-uptime at SoC generation
-#endif
 
 mp_uint_t mp_hal_ticks_us(void)
 {

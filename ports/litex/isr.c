@@ -1,4 +1,5 @@
 // This file is Copyright (c) 2017-2021 Fupy/LiteX-MicroPython Developers
+//Copyright (C) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
 // License: BSD-2-Clause
 
 #include <generated/csr.h>
@@ -6,6 +7,7 @@
 #include <uart.h>
 #include <timer.h>
 
+#ifdef CONFIG_CPU_HAS_INTERRUPT
 void isr(void)
 {
 	unsigned int irqs;
@@ -23,3 +25,8 @@ void isr(void)
 		uart_isr();
 #endif
 }
+
+#else
+#warning SoC should have interrupts enabled
+void isr(void) {}
+#endif

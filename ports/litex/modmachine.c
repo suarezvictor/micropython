@@ -31,9 +31,9 @@ STATIC mp_obj_t machine_identifier(void) {
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_identifier_obj, machine_identifier);
 
-STATIC mp_obj_t machine_reset(void) {
+STATIC NORETURN mp_obj_t machine_reset(void) {
     ctrl_reset_soc_rst_write(1);
-    return mp_const_none;
+    for(;;);
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_reset_obj, machine_reset);
 
@@ -51,13 +51,22 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_mem16), MP_ROM_PTR(&machine_mem16_obj) },
     { MP_ROM_QSTR(MP_QSTR_mem32), MP_ROM_PTR(&machine_mem32_obj) },
 
+#ifdef CSR_GPIO_BASE
+    { MP_ROM_QSTR(MP_QSTR_Pin), MP_ROM_PTR(&machine_pin_type) },
     { MP_ROM_QSTR(MP_QSTR_SoftI2C), MP_ROM_PTR(&mp_machine_soft_i2c_type) },
     { MP_ROM_QSTR(MP_QSTR_SoftSPI), MP_ROM_PTR(&mp_machine_soft_spi_type) },
+#endif
+#ifdef USE_HARDWARE_SPI
+    { MP_ROM_QSTR(MP_QSTR_SPI),     MP_ROM_PTR(&machine_hw_spi_type) },
+#endif
 #ifdef CSR_TIMER0_BASE
     { MP_ROM_QSTR(MP_QSTR_Timer), MP_ROM_PTR(&machine_timer_type) },
 #endif
 #ifdef CSR_LEDS_PWM_ENABLE_ADDR // CSR_LEDS_PWM_ENABLE_ADDR is just for tsting
     { MP_ROM_QSTR(MP_QSTR_PWM), MP_ROM_PTR(&machine_pwm_type) },
+#endif
+#if MICROPY_HW_ENABLE_SDCARD
+    { MP_ROM_QSTR(MP_QSTR_SDCard), MP_ROM_PTR(&machine_sdcard_type) },
 #endif
 };
 

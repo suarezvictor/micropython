@@ -18,6 +18,7 @@
 #define MICROPY_PY_SYS              (1)
 #define MICROPY_PY_MACHINE          (1)
 #define MICROPY_KBD_EXCEPTION       (1)
+#define MICROPY_PY_BUILTINS_MEMORYVIEW (1)
 
 // extended modules
 #define MICROPY_PY_MACHINE_SPI              (1)
@@ -41,49 +42,52 @@ typedef long      mp_off_t;
 #define MICROPY_HW_SDRAM_BASE MAIN_RAM_BASE
 #define MICROPY_HW_SDRAM_SIZE MAIN_RAM_SIZE
 #endif
-
-// C-level pin HAL
-#define MP_HAL_PIN_FMT "%u"
-#define mp_hal_pin_name(p)      (p)
-
-#ifdef CSR_GPIO_BASE
-#if CSR_GPIO_OE_SIZE > 1
-typedef uint64_t csr_gpio_t; //up to 64 pins supported as defined in software/include/generated/csr.h (uint64_t type)
-#else
-typedef uint32_t csr_gpio_t;
+#ifdef CSR_VIDEO_FRAMEBUFFER_BASE
+#define MICROPY_PY_FRAMEBUF (1)
 #endif
-#define csr_1 ((csr_gpio_t)1)
-#define csr_pin_set(v, p) ((v) | (csr_1 << (p)))
-#define csr_pin_clear(v, p) ((v) & ~(csr_1 << (p)))
-#define csr_pin_read(v, p) (((v) & (csr_1 << (p))) != 0)
 
-#define mp_hal_pin_obj_t uint8_t
-
-#define mp_hal_pin_input(p)     gpio_oe_write(csr_pin_clear(gpio_oe_read(), p))
-#define mp_hal_pin_output(p)    gpio_oe_write(csr_pin_set(gpio_oe_read(), p))
-#define mp_hal_pin_low(p)       gpio_out_write(csr_pin_clear(gpio_out_read(), p))
-#define mp_hal_pin_high(p)      gpio_out_write(csr_pin_set(gpio_out_read(), p))
-#define mp_hal_pin_read(p)      csr_pin_read(gpio_in_read(), p)
-#define mp_hal_pin_write(p, v)  ((v) ? mp_hal_pin_high(p) : mp_hal_pin_low(p)) //TODO: write a more time-deterministic implementation:
-//#define csr_pin_write(v, p, bit) (csr_pin_clear(v, p) | (((csr_gpio_t)bit) << (p)))
-
-#define mp_hal_pin_open_drain(p) (mp_hal_pin_input(p), mp_hal_pin_low(p)) //assumes hardware pullup (external resistor or FPGA pin configuration)
-#define mp_hal_pin_od_low(p)    mp_hal_pin_output(p)
-#define mp_hal_pin_od_high(p)   mp_hal_pin_input(p)
-
-mp_hal_pin_obj_t pin_find(const void *pin_in);
-#define mp_hal_get_pin_obj(o) pin_find(o)
-#define machine_pin_get_id(o) mp_hal_get_pin_obj(o)
-
-#else
-//no GPIO enabled in SoC definition
-#define mp_hal_pin_input(p)
-#define mp_hal_pin_output(p)
-#define mp_hal_pin_open_drain(p)
-#define mp_hal_pin_od_low(p)
-#define mp_hal_pin_od_high(p)
-#define machine_pin_get_id(o) 0
+#if defined(CSR_SPI_BASE) || defined (CSR_SPI0_BASE)
+#define USE_HARDWARE_SPI
 #endif
+
+#if MICROPY_VFS_FAT
+#define MICROPY_HW_ENABLE_SDCARD            (1)
+#define MICROPY_FATFS_RPATH            (2)
+#ifdef MICROPY_FATFS_RPATH
+#define FF_FS_RPATH (MICROPY_FATFS_RPATH)
+#else
+#define FF_FS_RPATH 0
+#endif
+
+// Whether to automatically mount (and boot from) the SD card if it's present
+#ifndef MICROPY_HW_SDCARD_MOUNT_AT_BOOT
+//#define MICROPY_HW_SDCARD_MOUNT_AT_BOOT (MICROPY_HW_ENABLE_SDCARD) //not enabled by default
+#endif
+
+#define MICROPY_FATFS_MULTI_PARTITION (1)
+#else //not MICROPY_VFS_FAT
+#undef MICROPY_VFS_FAT  //if there's no SD core, disable VFS fat
+#define MICROPY_VFS_FAT (0)
+#endif //MICROPY_VFS_FAT
+
+#if MICROPY_VFS_FAT
+#define MICROPY_VFS MICROPY_VFS_FAT
+#define MICROPY_PY_IO               (1)
+#define MICROPY_PY_IO_IOBASE        (1)
+#define MICROPY_PY_SYS_STDFILES     (1)
+#define MICROPY_PY_IO_FILEIO        (MICROPY_VFS_FAT || MICROPY_VFS_LFS1 || MICROPY_VFS_LFS2)
+#define mp_type_fileio mp_type_vfs_fat_fileio
+#define mp_type_textio mp_type_vfs_fat_textio
+#define MICROPY_FATFS_EXFAT         (1)
+#define MICROPY_FATFS_ENABLE_LFN    (1)
+// use vfs's functions for import stat and builtin open
+#define mp_import_stat mp_vfs_import_stat
+#define mp_builtin_open mp_vfs_open
+#define mp_builtin_open_obj mp_vfs_open_obj
+#endif
+#define MICROPY_READER_VFS              (MICROPY_VFS_FAT)
+
+#define MICROPY_PY_SYS_PLATFORM "LiteX (" CONFIG_BUS_STANDARD " bus)" //TODO: use board name from SoC generation
 
 #define TIMER0_POLLING //interrupt handing not enabled yet
 #ifdef CSR_TIMER0_UPTIME_LATCH_ADDR
@@ -110,10 +114,12 @@ static inline void mp_hal_delay_us_fast(mp_uint_t us) { us*=4; volatile static u
 extern const struct _mp_obj_module_t mp_module_machine;
 extern const struct _mp_obj_module_t mp_module_litex;
 extern const struct _mp_obj_module_t mp_module_utime;
+extern const struct _mp_obj_module_t uos_module;
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&mp_module_machine) }, \
     { MP_ROM_QSTR(MP_QSTR_litex),    MP_ROM_PTR(&mp_module_litex)   }, \
     { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, \
+    { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&uos_module) }, \
 
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>

@@ -36,6 +36,7 @@
 #include "py/runtime.h"
 #include "modmachine.h"
 #include "mphalport.h"
+#include "litesdk_timer.h"
 
 #ifdef ESP32 //see notes in machine_hw_spi.c about reusing code from ESP32 port
 #include "driver/timer.h"
@@ -48,7 +49,9 @@
 #define TIMER_DIVIDER  8
 #define TIMER_FLAGS    0
 
-#else
+// TIMER_BASE_CLK is normally 80MHz. TIMER_DIVIDER ought to divide this exactly
+#define TIMER_SCALE    (TIMER_BASE_CLK / TIMER_DIVIDER)
+#else //not ESP32
 #include <irq.h>
 
 #define TIMER_BASE_CLK CONFIG_CLOCK_FREQUENCY
@@ -60,17 +63,19 @@
 
 typedef struct _machine_timer_obj_t {
     mp_obj_base_t base;
-    mp_uint_t group;
     mp_uint_t index;
 
     mp_uint_t repeat;
-    // ESP32 timers are 64-bit
-    uint64_t period; //LiteX too
-
-    mp_obj_t callback;
 #ifdef ESP32
+    mp_uint_t group;
+    // ESP32 timers are 64-bit
+    uint64_t period;
     intr_handle_t handle;
+#else
+    litetimer_value_t period;
+    litetimer_t *tim;
 #endif
+    mp_obj_t callback;
 
     struct _machine_timer_obj_t *next;
 } machine_timer_obj_t;
@@ -108,20 +113,34 @@ STATIC void machine_timer_print(const mp_print_t *print, mp_obj_t self_in, mp_pr
 
 STATIC mp_obj_t machine_timer_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 1, 1, false);
-    mp_uint_t group = (mp_obj_get_int(args[0]) >> 1) & 1;
     mp_uint_t index = mp_obj_get_int(args[0]) & 1;
 
     // Check whether the timer is already initialized, if so return it
     for (machine_timer_obj_t *t = MP_STATE_PORT(machine_timer_obj_head); t; t = t->next) {
-        if (t->group == group && t->index == index) {
-            return t;
+        if (t->index == index)
+        {
+#ifdef ESP32
+           mp_uint_t group = (mp_obj_get_int(args[0]) >> 1) & 1;
+            if(t->group == group)
+#endif
+                return t;
         }
     }
 
+    litetimer_t *tim = litetimer_instance(index);
+    if (tim == NULL) {
+         nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
+			"Timer number %d is not valid", index));
+    }
+    litetimer_init(tim);
+
     machine_timer_obj_t *self = m_new_obj(machine_timer_obj_t);
     self->base.type = &machine_timer_type;
+#ifdef ESP32
     self->group = group;
+#endif
     self->index = index;
+    self->tim = tim;
 
     // Add the timer to the linked-list of timers
     self->next = MP_STATE_PORT(machine_timer_obj_head);
@@ -138,7 +157,7 @@ STATIC void machine_timer_disable(machine_timer_obj_t *self) {
         self->handle = NULL;
     }
 #else
-    timer0_en_write(0);
+    litetimer_stop(self->tim);
 #endif
     // We let the disabled timer stay in the list, as it might be
     // referenced elsewhere
@@ -171,7 +190,7 @@ STATIC void machine_timer_isr(void *self_in) {
     device->hw_timer[self->index].config.alarm_en = self->repeat;
 
     #endif
-#else
+#else //not ESP32
     //printf("in machine_timer_isr(), self=%p\n", self);
 #endif
     mp_sched_schedule(self->callback, self);
@@ -184,14 +203,17 @@ STATIC void machine_timer_isr(void *self_in) {
 
 #ifndef ESP32
 #ifndef TIMER0_POLLING
+#warning timer ISE not tested!
 static void *self_isr = NULL;
 void timer0_isr(void)
 {
     if(self_isr)
         machine_timer_isr(self_isr);
 }
+#else //not TIMER0_POLLING
+void timer0_isr(void) {}
 #endif
-#endif
+#endif //ESP32
 
 STATIC void machine_timer_enable(machine_timer_obj_t *self) {
 #ifdef ESP32
@@ -209,45 +231,43 @@ STATIC void machine_timer_enable(machine_timer_obj_t *self) {
     check_esp_err(timer_enable_intr(self->group, self->index));
     check_esp_err(timer_isr_register(self->group, self->index, machine_timer_isr, (void *)self, TIMER_FLAGS, &self->handle));
     check_esp_err(timer_start(self->group, self->index));
-#else
-    timer0_en_write(0);
+#else //not ESP32
 
 #ifndef TIMER0_POLLING
+    litetimer_stop(self->tim);
+#error timer interrupts not tested, TIMER0_POLLING should be defined
     //TODO: handle irq masking on a init function
-    printf("in machine_timer_enable(), irq_mask=%d, irq_ie=%d\n", irq_getmask(), irq_getie());
+    //printf("in machine_timer_enable(), irq_mask=%d, irq_ie=%d\n", irq_getmask(), irq_getie());
     irq_setmask(irq_getmask() | (1 << TIMER0_INTERRUPT));
     irq_setie(irq_getie() | (1 << TIMER0_INTERRUPT));
 
     self_isr = (void *)self;
-    printf("in machine_timer_enable(), group=%d, index=%d, period=%ld, repeat=%d, irq_mask=%d, irq_ie=%d\n",
-        self->group, self->index, (long)self->period, self->repeat, irq_getmask(), irq_getie());
+    //printf("in machine_timer_enable(), group=%d, index=%d, period=%ld, repeat=%d, irq_mask=%d, irq_ie=%d\n",
+    //    self->group, self->index, (long)self->period, self->repeat, irq_getmask(), irq_getie());
 #endif
 
-/*
-   To use the Timer in One-Shot mode, the user needs to:
-    - Disable the timer
-    - Set the ``load`` register to the expected duration
-    - (Re-)Enable the Timer
-    To use the Timer in Periodic mode, the user needs to:
-    - Disable the Timer
-    - Set the ``load`` register to 0
-    - Set the ``reload`` register to the expected period
-    - Enable the Timer
-*/
-    timer0_load_write(self->period);
-    timer0_reload_write(self->repeat ? self->period : 0);
-    timer0_en_write(1);
+    //timer0_load_write(self->period);
+    //timer0_reload_write(self->repeat ? self->period : 0);
+    //timer0_en_write(1);
+    if(self->repeat)
+      litetimer_set_periodic_cycles(self->tim, self->period);
+    else
+      litetimer_set_oneshot_cycles(self->tim, self->period);
+    litetimer_start(self->tim);
 
 #ifdef TIMER0_POLLING
-    timer0_update_value_write(1);
-    uint64_t t0 = timer0_value_read();
+    //FIXME: since interrupts are not supported, for periodic timer loops forever, and waits for one-shot timers
+    //timer0_update_value_write(1);
+    //uint64_t t0 = timer0_value_read();
+    litetimer_value_t t0 = litetimer_get_value_cycles(self->tim);
     for(;;)
     {
-        timer0_update_value_write(1);
-        uint64_t t = timer0_value_read();
-        if(t == 0 && !self->repeat)
+        //timer0_update_value_write(1);
+        //uint64_t t = timer0_value_read();
+        litetimer_value_t t = litetimer_get_value_cycles(self->tim);
+        if(!self->repeat && t == 0)
             break;
-        if(t > t0) //wrap around
+        if(t > t0) //wraps around
            //machine_timer_isr(self);
            mp_call_function_1(self->callback, self);
         t0 = t;
@@ -282,7 +302,7 @@ STATIC mp_obj_t machine_timer_init_helper(machine_timer_obj_t *self, mp_uint_t n
 
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
-
+#ifdef ESP32
     #if MICROPY_PY_BUILTINS_FLOAT
     if (args[ARG_freq].u_obj != mp_const_none) {
         self->period = (uint64_t)(TIMER_SCALE / mp_obj_get_float(args[ARG_freq].u_obj));
@@ -295,6 +315,27 @@ STATIC mp_obj_t machine_timer_init_helper(machine_timer_obj_t *self, mp_uint_t n
     else {
         self->period = (((uint64_t)args[ARG_period].u_int) * TIMER_SCALE) / args[ARG_tick_hz].u_int;
     }
+#else
+    #if MICROPY_PY_BUILTINS_FLOAT
+    if (args[ARG_freq].u_obj != mp_const_none) {
+        float f = mp_obj_get_float(args[ARG_freq].u_obj);
+        //printf("Set timer freq float %f\n", (double) f);
+        self->period = litetimer_freqf_to_cycles(self->tim, f);
+    }
+    #else
+    if (args[ARG_freq].u_int != 0xffffffff) {
+        unsigned f = args[ARG_freq].u_int;
+        //printf("Set timer freq integer %u\n", f);
+        self->period = litetimer_freq_to_cycles(self->tim, f);
+    }
+    #endif
+    else {
+        unsigned p = args[ARG_period].u_int;
+        //printf("Set timer period(ms) integer %u\n", p);
+        self->period = litetimer_ms_to_cycles(self->tim, p);
+    }
+    //printf("period set %lu\n", self->period);
+#endif //ESP32
 
     self->repeat = args[ARG_mode].u_int;
     self->callback = args[ARG_callback].u_obj;
@@ -308,7 +349,10 @@ STATIC mp_obj_t machine_timer_init_helper(machine_timer_obj_t *self, mp_uint_t n
 
 STATIC mp_obj_t machine_timer_deinit(mp_obj_t self_in) {
     machine_timer_disable(self_in);
-
+#ifndef ESP32
+    machine_timer_obj_t *self = self_in;
+    litetimer_deinit(self->tim);
+#endif
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(machine_timer_deinit_obj, machine_timer_deinit);
@@ -319,17 +363,19 @@ STATIC mp_obj_t machine_timer_init(size_t n_args, const mp_obj_t *args, mp_map_t
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(machine_timer_init_obj, 1, machine_timer_init);
 
 STATIC mp_obj_t machine_timer_value(mp_obj_t self_in) {
-#ifdef ESP32
+
     machine_timer_obj_t *self = self_in;
+#ifdef ESP32
     double result;
 
     timer_get_counter_time_sec(self->group, self->index, &result);
 
     return MP_OBJ_NEW_SMALL_INT((mp_uint_t)(result * 1000));  // value in ms
 #else
-    timer0_update_value_write(1);
-    uint64_t t = timer0_value_read();
-    return MP_OBJ_NEW_SMALL_INT((mp_uint_t)(t*1000/TIMER_SCALE));
+    //timer0_update_value_write(1);
+    //uint64_t t = timer0_value_read();
+    //return MP_OBJ_NEW_SMALL_INT((mp_uint_t)(t*1000/TIMER_SCALE));
+    return MP_OBJ_NEW_SMALL_INT(litetimer_get_value_ms(self->tim));
 #endif
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(machine_timer_value_obj, machine_timer_value);

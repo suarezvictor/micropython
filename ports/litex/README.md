@@ -9,7 +9,7 @@ control it, very powerful and flexible systems can be created!
 Supported features:
 - REPL (Python prompt) over UART.
 - Minimal umachine support (reset, freq, identifier).
-- Minimal litex support(leds, switches).
+- LiteX pheripherals support (leds, GPIO, SPI/SoftSPI, SoftI2C, PWM, Timer, DMA, Video, SD card, etc.).
 
 Setting up LiteX
 ----------------
