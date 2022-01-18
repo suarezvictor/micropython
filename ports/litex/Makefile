@@ -16,6 +16,7 @@ endef
 $(error $(ERROR_MSG))
 endif
 
+LIBLITESDCARD_DIRECTORY = liblitesdcard
 
 # Import LiteX's variables.mak
 include $(BUILD_DIRECTORY)/software/include/generated/variables.mak
