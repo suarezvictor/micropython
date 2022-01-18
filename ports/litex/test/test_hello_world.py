@@ -1,8 +1,10 @@
-#raw REPL demo
+# Minimal Raw REPL test.
+# Copyright (C) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
 #
-#can be executed as follows:
-#$ pyboard.py -d /dev/ttyUSB1 -b 1000000 examples/main.py
-#Alternatively, can be copied to the board flash storage
-#to be run at boot
-#
-print("Hello from main.py!")
+# SPDX-License-Identifier: BSD-2-Clause
+
+# Python script can be executed:
+# - through pyboard: python3 ../../../tools/pyboard.py -d /dev/ttyUSBX test_xy.py
+# - copied to board flash storage and configured to be run at boot.
+
+print("Hello World from Micropython running on your LiteX SoC!")
