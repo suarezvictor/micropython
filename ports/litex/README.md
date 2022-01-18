@@ -53,9 +53,10 @@ And just let LiteX boot from it!...
 
 Execute examples in RAW-REPL mode (through Pyboard)
 ---------------------------------------------------
-With Micropython firmware loaded on the SoC, examples can be run with:
+With Micropython firmware loaded on the SoC, tests can be run with:
 ```bash
-$ ./pyboard.py -d /dev/ttyUSBX main.py
-$ ./pyboard.py -d /dev/ttyUSBX MACHINE_demo.py
-...
+$ cd test
+$ python3 ../../../tools/pyboard.py -d /dev/ttyUSBX test_hello_world.py
+$ python3 ../../../tools/pyboard.py -d /dev/ttyUSBX test_machine.py
+$ etc...
 ```
