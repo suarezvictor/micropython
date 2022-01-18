@@ -1,6 +1,5 @@
-/*
- * Copyright (C) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
-*/
+// This file is Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
+// License: BSD-2-Clause
 
 #ifndef __LITESDK_GPIO_H_
 #define __LITESDK_GPIO_H_

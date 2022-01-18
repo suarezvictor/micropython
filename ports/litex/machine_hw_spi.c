@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2017 "Eric Poulsen" <eric@zyxod.com>
  * Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
- * 
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal

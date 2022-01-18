@@ -1,6 +1,5 @@
-/*
- * Copyright (c) 2021 Enjoy-Digital <florent@enjoy-digital.fr> (author: Victor Suarez Rovere <suarezvictor@gmail.com>)
-*/
+// This file is Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
+// License: BSD-2-Clause
 
 #ifndef __LITESDK_TIMER_H_
 #define __LITESDK_TIMER_H_

@@ -1,3 +1,6 @@
+// This file is Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
+// License: BSD-2-Clause
+
 #include <string.h> //for memcpy
 
 #include <generated/csr.h>

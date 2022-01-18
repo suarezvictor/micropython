@@ -1,6 +1,5 @@
-/*
- * Copyright (C) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
-*/
+// This file is Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
+// License: BSD-2-Clause
 
 #ifndef STATIC_ASSERT
 //TODO: move to a more general place

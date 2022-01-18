@@ -5,9 +5,9 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2021 Enjoy-Digital <florent@enjoy-digital.fr> (author: Victor Suarez Rovere <suarezvictor@gmail.com>)
  * Copyright (c) 2015 Josef Gajdusek
  * Copyright (c) 2016 Damien P. George
+ * Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal

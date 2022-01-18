@@ -1,5 +1,5 @@
 # This file is Copyright (c) 2017-2021 Fupy/LiteX-MicroPython Developers
-# Copyright (c) 2021-2022 Victor Suarez Rovere <suarezvictor@gmail.com>
+# This file is Copyright (c) 2021-2022 Victor Suarez Rovere <suarezvictor@gmail.com>
 # License: BSD-2-Clause
 
 # Check LiteX's BUILD_DIRECTORY definition.
@@ -98,26 +98,26 @@ SRC_C = \
 	lib/utils/stdout_helpers.c \
 	lib/utils/interrupt_char.c \
 	lib/utils/pyexec.c \
-        lib/timeutils/timeutils.c \
+	lib/timeutils/timeutils.c \
 	lib/mp-readline/readline.c
 
 #lib sources with no need of QSTR extraction
 SRC_LITEX = \
 	$(LIBBASE_DIRECTORY)/system.c \
 	$(LIBBASE_DIRECTORY)/uart.c \
-        $(LIBLITESDCARD_DIRECTORY)/spisdcard.c \
-        $(LIBLITESDCARD_DIRECTORY)/sdcard.c \
+	$(LIBLITESDCARD_DIRECTORY)/spisdcard.c \
+	$(LIBLITESDCARD_DIRECTORY)/sdcard.c \
 
 SRC_C += $(SRC_MOD)
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
 	bus/softspi.c \
-        )
+)
 
 EXTMOD_SRC_C = $(addprefix extmod/,\
 	machine_spi.c \
 	machine_i2c.c \
-        )
+)
 
 CRT0_S ?= $(CPU_DIRECTORY)/crt0.S
 CRT0_O = $(BUILD)/software/libbase/crt0.o
