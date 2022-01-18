@@ -1,6 +1,9 @@
 # Write to SD card demo, raw mode (see FAT_write for filesystem mode)
 # reads a zero-filled sector, changes first and bytes, writes and checks
 # then restore values
+# Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
+#
+# SPDX-License-Identifier: BSD-2-Clause
 
 from umachine import SDCard
 sd = SDCard()

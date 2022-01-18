@@ -1,12 +1,10 @@
-# Simple DMA demo
-# SoC config:
-#  - it seems to require --sdram-rate=1:2 for 16-bit buses
-#  - for LiteDRAMDMAReader/Writer, set l2_cache_reverse=False for SDRAM
-#  - for WishboneDMAReader/Writer, set endianness="big"
+# Simple DMA test.
+# Requirements (FIXME: Remove/Understand):
+#  - --sdram-rate=1:2 for 16-bit buses.
+#  - endianness set to "big" on WishboneDMAReader/Writer.
+# Copyright (C) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
 #
 # SPDX-License-Identifier: BSD-2-Clause
-
-
 
 import litex
 

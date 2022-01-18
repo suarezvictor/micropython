@@ -1,4 +1,6 @@
-# Simple PWM demo
+# Simple PWM test.
+# Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
+#
 # SPDX-License-Identifier: BSD-2-Clause
 
 from umachine import PWM

@@ -1,4 +1,4 @@
-# Machine test.
+# Simple Machine test.
 # Copyright (C) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
 #
 # SPDX-License-Identifier: BSD-2-Clause

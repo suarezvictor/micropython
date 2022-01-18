@@ -1,7 +1,7 @@
 # SD benchmark functions
 # sequential and non-sequential access and different block sizes
-#
 # Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
+#
 # SPDX-License-Identifier: BSD-2-Clause
 
 import umachine

@@ -1,7 +1,7 @@
-# Simple fraebuffer demo
-# SoC config:
-#  - framebuffer format should be "rgb565"
-#  - L2 cache hasn't to be reversed
+# Simple Framebuffer test.
+# Requirements:
+#  - Framebuffer format should be "rgb565"
+# Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
 #
 # SPDX-License-Identifier: BSD-2-Clause
 
