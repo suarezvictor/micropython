@@ -86,7 +86,6 @@ SRC_C = \
 	moduos.c \
 	modutime.c \
 	modlitex.c \
-	litex_pin.c \
 	litex_led.c \
 	litex_dma.c \
 	litex_video.c \

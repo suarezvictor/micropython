@@ -4,7 +4,6 @@
 
 #include "py/obj.h"
 
-extern const mp_obj_type_t litex_pin_type;
 extern const mp_obj_type_t litex_led_type;
 extern const mp_obj_type_t litex_dmawriter_type;
 extern const mp_obj_type_t litex_dmareader_type;
@@ -12,8 +11,6 @@ extern const mp_obj_type_t litex_video_type;
 
 STATIC const mp_rom_map_elem_t litex_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_litex) },
-#warning: litex.PIN should be deprecated since replaced by the standard one umachine.Pin
-    { MP_ROM_QSTR(MP_QSTR_PIN),    MP_ROM_PTR(&litex_pin_type) }, //TODO: replace by machine.Pin
     { MP_ROM_QSTR(MP_QSTR_LED),    MP_ROM_PTR(&litex_led_type) },
 #ifdef CSR_DMA_WRITER_BASE
     { MP_ROM_QSTR(MP_QSTR_DMAWriter), MP_ROM_PTR(&litex_dmawriter_type) },
