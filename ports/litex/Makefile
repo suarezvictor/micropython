@@ -2,6 +2,10 @@
 # This file is Copyright (c) 2021-2022 Victor Suarez Rovere <suarezvictor@gmail.com>
 # License: BSD-2-Clause
 
+# LearnFPGA libs and demos: https://github.com/BrunoLevy/learn-fpga/tree/master/LiteX/software
+LEARNFPGA_LITEX_SOFTWARE ?= $(BUILD)/../learn-fpga/LiteX/software #learn-fpga may be a symolic link to a learn-fpga repo
+CFLAGS += -DLEARNFPGA_LITEX
+
 # Check LiteX's BUILD_DIRECTORY definition.
 
 BUILD_DIRECTORY ?= .
@@ -68,6 +72,7 @@ INC += -I$(TOP)
 INC += -I$(BUILD_DIRECTORY)/software/include
 INC += -I$(SOC_DIRECTORY)/software/include
 INC += -I$(CPU_DIRECTORY)
+INC += -I$(LEARNFPGA_LITEX_SOFTWARE)/Libs
 
 # Set LDFLAGS.
 LDFLAGS += -nostartfiles -T linker.ld -Wl,-Map=$@.map -Wl,--cref
@@ -106,6 +111,7 @@ SRC_LITEX = \
 	$(LIBBASE_DIRECTORY)/uart.c \
 	$(LIBLITESDCARD_DIRECTORY)/spisdcard.c \
 	$(LIBLITESDCARD_DIRECTORY)/sdcard.c \
+	$(LEARNFPGA_LITEX_SOFTWARE)/Libs/lite_fb.c \
 
 SRC_C += $(SRC_MOD)
 

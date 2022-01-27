@@ -14,8 +14,7 @@
 
 
 #ifndef VIDEO_FRAMEBUFFER_DEPTH
-#warning VIDEO_FRAMEBUFFER_DEPTH is hardcoded! should be specified at SoC generation
-#define VIDEO_FRAMEBUFFER_DEPTH 32
+#error VIDEO_FRAMEBUFFER_DEPTH should be specified at SoC generation
 #endif
 
 typedef struct _litex_video_type_t {
@@ -26,6 +25,41 @@ typedef struct _litex_video_type_t {
     uint8_t bitdepth;
     uint8_t num;
 } litex_video_obj_t;
+
+
+#ifdef LEARNFPGA_LITEX
+
+#define VIDEO_FRAMEBUFFER_STRIDE (VIDEO_FRAMEBUFFER_HRES*VIDEO_FRAMEBUFFER_DEPTH/8)
+
+#include <lite_fb.h>
+
+void video_clear32(void *video_addr, uint32_t color)
+{
+    uint8_t *p = (uint8_t * ) video_addr;
+    for(int y = 0; y < VIDEO_FRAMEBUFFER_VRES; ++y, p += VIDEO_FRAMEBUFFER_STRIDE)
+    {
+        uint32_t *px = (uint32_t *) p;
+        for(int x = 0; x < VIDEO_FRAMEBUFFER_HRES; ++x)
+            *px++ = color;
+    }
+}
+
+void video_demo(litex_video_obj_t *self)
+{
+#if 0
+    static uint32_t color = 0xFF;
+    video_clear32(self->video_addr, color);
+    color <<= 8; color |= color >> 24; //cycle R, G, B
+#else
+    static uint32_t color = 0xFF;
+    fb_fillrect(50, 50, 200, 200, color);
+    color <<= 8; color |= color >> 24; //cycle R, G, B
+#endif
+    flush_l2_cache(); //or do a video flip
+}
+
+#endif
+
 
 const mp_obj_type_t litex_video_type;
 
@@ -48,7 +82,11 @@ STATIC mp_obj_t litex_video_make_new(const mp_obj_type_t *type_in,
     self->video_addr = (void *) video_framebuffer_base_read(); //reads word at VIDEO_FRAMEBUFFER_BASE
     self->stride = self->xres*VIDEO_FRAMEBUFFER_DEPTH/8;
 
+#ifdef LEARNFPGA_LITEX
+    fb_init();
+#else
     memset(self->video_addr, 0/*xFF*/, self->yres*self->stride);
+#endif
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -118,12 +156,24 @@ STATIC mp_obj_t litex_video_blitbuf(mp_obj_t self_in, mp_obj_t mem_buf)
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(litex_video_blitbuf_obj, litex_video_blitbuf);
 
 
+#ifdef LEARNFPGA_LITEX
+STATIC mp_obj_t litex_video_demo(mp_obj_t self_in)
+{
+    litex_video_obj_t *self = (litex_video_obj_t *) self_in;
+    video_demo(self);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(litex_video_demo_obj, litex_video_demo);
+#endif
+
+
 STATIC const mp_map_elem_t litex_video_locals_dict_table[] = {
 	{ MP_OBJ_NEW_QSTR(MP_QSTR_width), (mp_obj_t) &litex_video_width_obj },
 	{ MP_OBJ_NEW_QSTR(MP_QSTR_height), (mp_obj_t) &litex_video_height_obj },
 	{ MP_OBJ_NEW_QSTR(MP_QSTR_bpp), (mp_obj_t) &litex_video_bpp_obj },
 	{ MP_OBJ_NEW_QSTR(MP_QSTR_stride), (mp_obj_t) &litex_video_stride_obj },
 	{ MP_OBJ_NEW_QSTR(MP_QSTR_blitbuf), (mp_obj_t) &litex_video_blitbuf_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_demo), (mp_obj_t) &litex_video_demo_obj },
 };
 
 STATIC MP_DEFINE_CONST_DICT(litex_video_locals_dict, litex_video_locals_dict_table);
