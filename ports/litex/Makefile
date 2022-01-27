@@ -16,10 +16,9 @@ endef
 $(error $(ERROR_MSG))
 endif
 
-LIBLITESDCARD_DIRECTORY = liblitesdcard
-
 # Import LiteX's variables.mak
 include $(BUILD_DIRECTORY)/software/include/generated/variables.mak
+LIBLITESDCARD_DIRECTORY = liblitesdcard
 
 # Include the core environment definitions; this will set $(TOP).
 include ../../py/mkenv.mk
