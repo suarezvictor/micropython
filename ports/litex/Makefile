@@ -3,7 +3,8 @@
 # License: BSD-2-Clause
 
 # LearnFPGA libs and demos: https://github.com/BrunoLevy/learn-fpga/tree/master/LiteX/software
-LEARNFPGA_LITEX_SOFTWARE ?= $(BUILD)/../learn-fpga/LiteX/software #learn-fpga may be a symolic link to a learn-fpga repo
+# learn-fpga may be a symolic link to a learn-fpga repo
+LEARNFPGA_LITEX_SOFTWARE ?= learn-fpga/LiteX/software
 CFLAGS += -DLEARNFPGA_LITEX
 
 # Check LiteX's BUILD_DIRECTORY definition.
@@ -131,6 +132,9 @@ OBJ =  $(CRT0_O) $(addprefix $(BUILD)/, $(SRC_S:.S=.o)) $(PY_O) $(addprefix $(BU
 OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LITEX:.c=.o))
+
+$(info $$OBJ is: ${OBJ})
+
 
 all: $(BUILD)/firmware.bin
 
