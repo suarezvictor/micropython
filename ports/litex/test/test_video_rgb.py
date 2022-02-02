@@ -1,4 +1,5 @@
-# Simple Framebuffer test.
+# Simple Framebuffer test using micropython-nano-gui
+# https://github.com/peterhinch/micropython-nano-gui
 # Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
 #
 # SPDX-License-Identifier: BSD-2-Clause
@@ -10,13 +11,12 @@ import cmath, math
 from color_setup import SSD, SSDRGB565, RGBWriter
 from gui.core.colors import *
 from gui.core.fplot import PolarGraph, PolarCurve
-from gui.core.nanogui import refresh
 from gui.fonts import freesans20 as largefont, arial35 as hugefont
 from gui.widgets.scale import Scale
 from gui.widgets.textbox import Textbox
 
 ssd = SSD()
-ssd.fill(0xFC00) #orange background
+ssd.fill(SSD.rgb(0xFF, 0x80, 0)) #orange background
 
 wri = RGBWriter(ssd, hugefont, WHITE, RED)
 tb = Textbox(wri, 250, 50, 200, 4, clip=False)
@@ -33,9 +33,7 @@ def populate(rot, nmax):
 g = PolarGraph(wri, 200, 300, height=250, fgcolor=WHITE, gridcolor=LIGHTGREEN, bgcolor=BLUE)
 curve = PolarCurve(g, GREEN, populate(1, 150))
 
-with open("fb16.data", "wb") as f:
-  f.write(ssd)
+#while ssd.debug_update(): pass
 
-with open("fb32.data", "wb") as f:
-  f.write(SSDRGB565.buffer_toRGBA888(ssd.buffer))
+ 
 
