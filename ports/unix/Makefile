@@ -38,13 +38,15 @@ INC +=  -I$(TOP)
 INC += -I$(BUILD)
 
 # compiler settings
-CWARN = -Wall -Werror
+CWARN = -Wall #-Werror
 CWARN += -Wextra -Wno-unused-parameter -Wpointer-arith -Wdouble-promotion -Wfloat-conversion
 CFLAGS += $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) -I$(VARIANT_DIR) $(CFLAGS_EXTRA)
 
 # Debugging/Optimization
 ifdef DEBUG
-COPT ?= -O0
+COPT ?= -O0 -D_DEBUG
+INC += $(shell sdl2-config --cflags)
+LDFLAGS += $(shell sdl2-config --libs)
 else
 COPT ?= -Os
 COPT += -DNDEBUG
