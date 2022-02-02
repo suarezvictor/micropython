@@ -4,6 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2016 Damien P. George
+ * Copyright (c) 2022 Victor Suarez Rovere <suarezvictor@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +32,30 @@
 
 #if MICROPY_PY_FRAMEBUF
 
+#ifdef _DEBUG
+#define FRAMEBUFFER_DEBUG
+#endif
+
+#ifdef FRAMEBUFFER_DEBUG
+#ifndef __linux__
+#error FRAMEBUFFER_DEBUG only supported on Linux
+#endif
+
+#include <SDL2/SDL.h>
+typedef struct
+{
+    SDL_Window* win;
+    SDL_Renderer* renderer;
+    SDL_Texture* texture;
+} debug_handle_t;
+
+bool fb_init(unsigned width, unsigned height, int format, debug_handle_t *handle);
+void fb_update(debug_handle_t *handle, const void *buf, size_t stride_bytes);
+void fb_deinit(debug_handle_t *handle);
+bool fb_should_quit(void);  
+#define fb_debug_update(s)  fb_update(&(s)->debug_handle, (s)->buf, (s)->stride*format_bpp((s)->format));
+#endif
+
 #include "ports/stm32/font_petme128_8x8.h"
 
 typedef struct _mp_obj_framebuf_t {
@@ -39,6 +64,9 @@ typedef struct _mp_obj_framebuf_t {
     void *buf;
     uint16_t width, height, stride;
     uint8_t format;
+#ifdef FRAMEBUFFER_DEBUG
+    debug_handle_t debug_handle;
+#endif
 } mp_obj_framebuf_t;
 
 #if !MICROPY_ENABLE_DYNRUNTIME
@@ -63,6 +91,7 @@ typedef struct _mp_framebuf_p_t {
 #define FRAMEBUF_GS8      (6)
 #define FRAMEBUF_MHLSB    (3)
 #define FRAMEBUF_MHMSB    (4)
+#define FRAMEBUF_RGB32    (7)
 
 // Functions for MHLSB and MHMSB
 
@@ -136,6 +165,26 @@ STATIC void rgb565_fill_rect(const mp_obj_framebuf_t *fb, unsigned int x, unsign
     }
 }
 
+// Functions for RGB32 format
+
+STATIC void rgb32_setpixel(const mp_obj_framebuf_t *fb, unsigned int x, unsigned int y, uint32_t col) {
+    ((uint32_t *)fb->buf)[x + y * fb->stride] = col;
+}
+
+STATIC uint32_t rgb32_getpixel(const mp_obj_framebuf_t *fb, unsigned int x, unsigned int y) {
+    return ((uint32_t *)fb->buf)[x + y * fb->stride];
+}
+
+STATIC void rgb32_fill_rect(const mp_obj_framebuf_t *fb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, uint32_t col) {
+    //FIXME: use DMA if available
+    uint32_t *b = &((uint32_t *)fb->buf)[x + y * fb->stride];
+    while (h--) {
+        for (unsigned int ww = w; ww; --ww) {
+            *b++ = col;
+        }
+        b += fb->stride - w;
+    }
+}
 // Functions for GS2_HMSB format
 
 STATIC void gs2_hmsb_setpixel(const mp_obj_framebuf_t *fb, unsigned int x, unsigned int y, uint32_t col) {
@@ -238,6 +287,7 @@ STATIC mp_framebuf_p_t formats[] = {
     [FRAMEBUF_GS8] = {gs8_setpixel, gs8_getpixel, gs8_fill_rect},
     [FRAMEBUF_MHLSB] = {mono_horiz_setpixel, mono_horiz_getpixel, mono_horiz_fill_rect},
     [FRAMEBUF_MHMSB] = {mono_horiz_setpixel, mono_horiz_getpixel, mono_horiz_fill_rect},
+    [FRAMEBUF_RGB32] = {rgb32_setpixel, rgb32_getpixel, rgb32_fill_rect},
 };
 
 static inline void setpixel(const mp_obj_framebuf_t *fb, unsigned int x, unsigned int y, uint32_t col) {
@@ -263,6 +313,16 @@ STATIC void fill_rect(const mp_obj_framebuf_t *fb, int x, int y, int w, int h, u
     formats[fb->format].fill_rect(fb, x, y, xend - x, yend - y, col);
 }
 
+STATIC unsigned format_bpp(int format)
+{
+    switch(format)
+    {
+      case FRAMEBUF_RGB32: return 4;
+      case FRAMEBUF_RGB565: return 2;
+    }
+    return 1;
+}
+
 STATIC mp_obj_t framebuf_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 4, 5, false);
 
@@ -286,6 +346,7 @@ STATIC mp_obj_t framebuf_make_new(const mp_obj_type_t *type, size_t n_args, size
     switch (o->format) {
         case FRAMEBUF_MVLSB:
         case FRAMEBUF_RGB565:
+        case FRAMEBUF_RGB32:
             break;
         case FRAMEBUF_MHLSB:
         case FRAMEBUF_MHMSB:
@@ -303,6 +364,13 @@ STATIC mp_obj_t framebuf_make_new(const mp_obj_type_t *type, size_t n_args, size
             mp_raise_ValueError(MP_ERROR_TEXT("invalid format"));
     }
 
+#ifdef FRAMEBUFFER_DEBUG
+    memset(&o->debug_handle, 0, sizeof(o->debug_handle));
+    if(!fb_init(o->width, o->height, o->format, &o->debug_handle))
+       mp_raise_ValueError(MP_ERROR_TEXT("Cannot create framebuffer debug window"));
+    printf("Created debug framebuffer %dx%d, %dbpp\n", o->width, o->height, 8*format_bpp(o->format));
+#endif
+
     return MP_OBJ_FROM_PTR(o);
 }
 
@@ -310,7 +378,7 @@ STATIC mp_int_t framebuf_get_buffer(mp_obj_t self_in, mp_buffer_info_t *bufinfo,
     (void)flags;
     mp_obj_framebuf_t *self = MP_OBJ_TO_PTR(self_in);
     bufinfo->buf = self->buf;
-    bufinfo->len = self->stride * self->height * (self->format == FRAMEBUF_RGB565 ? 2 : 1);
+    bufinfo->len = self->stride * self->height * format_bpp(self->format);
     bufinfo->typecode = 'B'; // view framebuf as bytes
     return 0;
 }
@@ -595,6 +663,91 @@ STATIC mp_obj_t framebuf_text(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(framebuf_text_obj, 4, 5, framebuf_text);
 
+#ifdef FRAMEBUFFER_DEBUG
+STATIC mp_obj_t framebuf_debug_update(mp_obj_t self_in)
+{
+    mp_obj_framebuf_t *self = MP_OBJ_TO_PTR(self_in);
+
+    if(fb_should_quit())
+      return MP_OBJ_NEW_SMALL_INT(0);
+
+    fb_debug_update(self);
+    return MP_OBJ_NEW_SMALL_INT(1);
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(framebuf_debug_update_obj, framebuf_debug_update);
+
+STATIC mp_obj_t framebuf_del(mp_obj_t self_in) {
+    mp_obj_framebuf_t *self = MP_OBJ_TO_PTR(self_in);
+    fb_deinit(&self->debug_handle);
+    return mp_const_none;
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(framebuf_del_obj, framebuf_del);
+
+bool fb_init(unsigned width, unsigned height, int format, debug_handle_t *handle)
+{
+    int texture_format;
+    if(SDL_Init(SDL_INIT_VIDEO) < 0)
+     return false;
+
+    handle->win = SDL_CreateWindow("Micropython debug framebuffer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN);
+    if (!handle->win)
+      return false;
+
+    handle->renderer = SDL_CreateRenderer(handle->win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_PRESENTVSYNC);
+    if (!handle->renderer)
+      return false;
+
+    switch(format)
+    {
+        case FRAMEBUF_RGB32: texture_format = SDL_PIXELFORMAT_BGRA32; break;
+        case FRAMEBUF_RGB565: texture_format = SDL_PIXELFORMAT_RGB565; break;
+        default:
+            return false; //FIXME: raise error
+    }
+
+    handle->texture = SDL_CreateTexture(handle->renderer, texture_format, SDL_TEXTUREACCESS_TARGET, width, height);
+    if (!handle->texture)
+      return false;
+
+    return true;
+}
+
+
+bool fb_should_quit(void)
+{
+    SDL_Event event;
+    while(SDL_PollEvent(&event))
+    {
+        switch(event.type)
+        {
+          case SDL_QUIT:
+            return true;
+          case SDL_KEYDOWN:
+            if(event.key.keysym.sym == SDLK_ESCAPE)
+               return true;
+        }
+    }
+    return false;
+}
+
+void fb_update(debug_handle_t *handle, const void *buf, size_t stride_bytes)
+{
+    SDL_UpdateTexture(handle->texture, NULL, buf, stride_bytes);
+    SDL_RenderCopy(handle->renderer, handle->texture, NULL, NULL);
+    SDL_RenderPresent(handle->renderer);
+}
+
+void fb_deinit(debug_handle_t *handle)
+{
+    SDL_DestroyTexture(handle->texture);
+    SDL_DestroyRenderer(handle->renderer);
+    SDL_DestroyWindow(handle->win);
+    handle->win = NULL;
+}
+#endif
+
 #if !MICROPY_ENABLE_DYNRUNTIME
 STATIC const mp_rom_map_elem_t framebuf_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_fill), MP_ROM_PTR(&framebuf_fill_obj) },
@@ -607,6 +760,10 @@ STATIC const mp_rom_map_elem_t framebuf_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_blit), MP_ROM_PTR(&framebuf_blit_obj) },
     { MP_ROM_QSTR(MP_QSTR_scroll), MP_ROM_PTR(&framebuf_scroll_obj) },
     { MP_ROM_QSTR(MP_QSTR_text), MP_ROM_PTR(&framebuf_text_obj) },
+#ifdef FRAMEBUFFER_DEBUG
+    { MP_ROM_QSTR(MP_QSTR_debug_update), MP_ROM_PTR(&framebuf_debug_update_obj) },
+    { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&framebuf_del_obj) },
+#endif
 };
 STATIC MP_DEFINE_CONST_DICT(framebuf_locals_dict, framebuf_locals_dict_table);
 
@@ -654,6 +811,7 @@ STATIC const mp_rom_map_elem_t framebuf_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_GS8), MP_ROM_INT(FRAMEBUF_GS8) },
     { MP_ROM_QSTR(MP_QSTR_MONO_HLSB), MP_ROM_INT(FRAMEBUF_MHLSB) },
     { MP_ROM_QSTR(MP_QSTR_MONO_HMSB), MP_ROM_INT(FRAMEBUF_MHMSB) },
+    { MP_ROM_QSTR(MP_QSTR_RGB32), MP_ROM_INT(FRAMEBUF_RGB32) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(framebuf_module_globals, framebuf_module_globals_table);
