@@ -32,7 +32,7 @@
 
 #if MICROPY_PY_FRAMEBUF
 
-#ifdef _DEBUG
+#if defined(_DEBUG) && defined(__linux__)
 #define FRAMEBUFFER_DEBUG
 #endif
 

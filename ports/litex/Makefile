@@ -5,7 +5,7 @@
 # LearnFPGA libs and demos: https://github.com/BrunoLevy/learn-fpga/tree/master/LiteX/software
 # learn-fpga may be a symolic link to a learn-fpga repo
 LEARNFPGA_LITEX_SOFTWARE ?= learn-fpga/LiteX/software
-CFLAGS += -DLEARNFPGA_LITEX
+#CFLAGS += -DLEARNFPGA_LITEX
 
 # Check LiteX's BUILD_DIRECTORY definition.
 
@@ -86,6 +86,7 @@ LIBS = -Wl,-lc -Wl,-lm
 # Set Sources.
 SRC_C = \
 	main.c \
+	mpmain.c \
 	isr.c \
 	modmachine.c \
 	moduos.c \

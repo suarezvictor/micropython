@@ -133,7 +133,8 @@ extern const struct _mp_obj_module_t uos_module;
 #elif __vexriscv__
 #define MICROPY_HW_MCU_NAME "VexRiscv CPU"
 #else
-#error "Unknown MCU."
+#define MICROPY_HW_MCU_NAME "Unknown CPU"
+#warning "Unknown MCU."
 #endif
 
 #define MP_STATE_PORT MP_STATE_VM

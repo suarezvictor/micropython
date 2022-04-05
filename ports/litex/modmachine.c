@@ -23,11 +23,15 @@ size_t strlen(const uint8_t *s) {
 }
 
 STATIC mp_obj_t machine_identifier(void) {
+#ifdef CSR_IDENTIFIER_MEM_BASE
     int i;
     uint8_t id[256];
     for(i=0;i<256;i++)
         id[i] = MMPTR(CSR_IDENTIFIER_MEM_BASE + 4*i);
     return mp_obj_new_bytes(id, strlen(id));
+#else
+    return mp_const_none;
+#endif
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_identifier_obj, machine_identifier);
 
