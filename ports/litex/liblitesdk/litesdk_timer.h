@@ -85,6 +85,12 @@ static inline uint32_t litetimer_cycles_to_ms(const litetimer_t *tim, litetimer_
 }
 
 
+static inline uint32_t litetimer_cycles_to_us(const litetimer_t *tim, litetimer_value_t cycles)
+{
+  (void) tim;
+  return LITETIMER_PERIOD_FROM_CYCLES64(cycles, 1000000);
+}
+
 //getters projectors
 /*
 static uint32_t litetimer_get_frequency(const litetimer_t *tim)
@@ -94,6 +100,8 @@ static uint32_t litetimer_get_frequency(const litetimer_t *tim)
 }
 */
 #define litetimer_get_frequency(tim) LITETIMER_BASE_FREQUENCY
+#define litetimer0 (litetimer_t *) CSR_TIMER0_BASE
+
 
 static inline litetimer_value_t litetimer_get_value_cycles(const litetimer_t *tim)
 {
@@ -101,6 +109,10 @@ static inline litetimer_value_t litetimer_get_value_cycles(const litetimer_t *ti
   return LITETIMER_READ(tim, VALUE);
 }
 
+static inline litetimer_value_t litetimer_get_value_us(const litetimer_t *tim)
+{
+  return litetimer_cycles_to_us(tim, litetimer_get_value_cycles(tim));
+}
 
 static inline litetimer_value_t litetimer_get_value_ms(const litetimer_t *tim)
 {
@@ -173,7 +185,7 @@ static inline litetimer_t *litetimer_instance(litepheripheral_id id)
 {
   if(id != 0) //only supports single timer
     return NULL; 
-  return (litetimer_t *) CSR_TIMER0_BASE;
+  return litetimer0;
 }
 
 #endif //LITETIMER_ENABLED
