@@ -55,32 +55,32 @@ typedef litegpio_out_t csr_gpio_t;
 #define csr_pin_read(v, p) (((v) & (csr_1 << (p))) != 0)
 
 
-static inline void litegpio_mode_input(litegpio_t *gpio, litegpio_pin_t pin)
+static LITEX_ALWAYS_INLINE void litegpio_mode_input(litegpio_t *gpio, litegpio_pin_t pin)
 {
   gpio->OE = csr_pin_clear(gpio->OE, pin); //gpio_oe_write(csr_pin_clear(gpio_oe_read(), pin));
 }
 
-static inline void litegpio_mode_output(litegpio_t *gpio, litegpio_pin_t pin)
+static LITEX_ALWAYS_INLINE void litegpio_mode_output(litegpio_t *gpio, litegpio_pin_t pin)
 {
   gpio->OE = csr_pin_set(gpio->OE, pin); //gpio_oe_write(csr_pin_set(gpio_oe_read(), pin));
 }
 
-static inline void litegpio_set_low(litegpio_t *gpio, litegpio_pin_t pin)
+static LITEX_ALWAYS_INLINE void litegpio_set_low(litegpio_t *gpio, litegpio_pin_t pin)
 {
   gpio->OUT = csr_pin_clear(gpio->OUT, pin); //gpio_out_write(csr_pin_clear(gpio_out_read(), pin));
 }
 
-static inline void litegpio_set_high(litegpio_t *gpio, litegpio_pin_t pin)
+static LITEX_ALWAYS_INLINE void litegpio_set_high(litegpio_t *gpio, litegpio_pin_t pin)
 {
   gpio->OUT = csr_pin_set(gpio->OUT, pin); //gpio_out_write(csr_pin_set(gpio_out_read(), pin));
 }
 
-static inline bool litegpio_read(litegpio_t *gpio, litegpio_pin_t pin)
+static LITEX_ALWAYS_INLINE bool litegpio_read(litegpio_t *gpio, litegpio_pin_t pin)
 {
   return csr_pin_read(gpio->IN, pin); //csr_pin_read(gpio_in_read(), pin);
 }
 
-static inline void litegpio_write(litegpio_t *gpio, litegpio_pin_t pin, bool value)
+static LITEX_ALWAYS_INLINE void litegpio_write(litegpio_t *gpio, litegpio_pin_t pin, bool value)
 {
   //FIXME: write a more time-deterministic implementation, for example:
   //#define csr_pin_write(v, p, bit) (csr_pin_clear(v, p) | (((csr_gpio_t)(bit)) << (p)))
@@ -96,18 +96,18 @@ static inline void litegpio_write(litegpio_t *gpio, litegpio_pin_t pin, bool val
 //open drain functions
 //FIXME: current implementations only controls Z (output enable) of a pin always set at LOW
 
-static inline void litegpio_mode_open_drain(litegpio_t *gpio, litegpio_pin_t pin)
+static LITEX_ALWAYS_INLINE void litegpio_mode_open_drain(litegpio_t *gpio, litegpio_pin_t pin)
 {
   litegpio_set_low(gpio, pin);
   litegpio_mode_input(gpio, pin);
 }
 
-static inline void litegpio_od_low(litegpio_t *gpio, litegpio_pin_t pin)
+static LITEX_ALWAYS_INLINE void litegpio_od_low(litegpio_t *gpio, litegpio_pin_t pin)
 {
   litegpio_mode_output(gpio, pin);
 }
 
-static inline void litegpio_od_high(litegpio_t *gpio, litegpio_pin_t pin)
+static LITEX_ALWAYS_INLINE void litegpio_od_high(litegpio_t *gpio, litegpio_pin_t pin)
 {
   litegpio_mode_input(gpio, pin);
 }
@@ -115,22 +115,22 @@ static inline void litegpio_od_high(litegpio_t *gpio, litegpio_pin_t pin)
 
 //helpers
 
-static inline void litegpio_init(litegpio_t *gpio)
+static LITEX_ALWAYS_INLINE void litegpio_init(litegpio_t *gpio)
 {
   (void) gpio;
 }
 
-static inline void litegpio_deinit(litegpio_t *gpio)
+static LITEX_ALWAYS_INLINE void litegpio_deinit(litegpio_t *gpio)
 {
   (void) gpio;
 }
 
 //lookups base address from a pheripheral id (0, 1, 2...)
-static inline litegpio_t *litegpio_instance(litepheripheral_id id)
+static LITEX_ALWAYS_INLINE litegpio_t *litegpio_instance(litepheripheral_id id)
 {
   if(id != 0) //only supports single gpio
     return NULL; 
-  return (litegpio_t *) CSR_GPIO_BASE;
+  return litegpio0;
 }
 
 #endif //LITEGPIO_ENABLED
