@@ -12,7 +12,7 @@
 
 
 #ifndef LITEX_ALWAYS_INLINE
-#define LITEX_ALWAYS_INLINE __attribute__((always_inline))
+#define LITEX_ALWAYS_INLINE inline //__attribute__((always_inline))
 #endif
 
 ////////////////////////////////////////////////////////////
