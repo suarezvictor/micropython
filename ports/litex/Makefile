@@ -9,7 +9,7 @@ LEARNFPGA_LITEX_SOFTWARE ?= learn-fpga/LiteX/software
 
 # Check LiteX's BUILD_DIRECTORY definition.
 
-BUILD_DIRECTORY ?= .
+BUILD_DIRECTORY ?= gateware/build/digilent_arty
 ifeq ($(wildcard $(BUILD_DIRECTORY)/software/include/generated/variables.mak),)
 define ERROR_MSG
 
@@ -95,6 +95,7 @@ SRC_C = \
 	litex_led.c \
 	litex_dma.c \
 	litex_video.c \
+	litex_usbhmi.c \
 	machine_hw_spi.c \
 	machine_timer.c \
 	machine_pwm.c \
