@@ -4,6 +4,7 @@
 
 #include <stdio.h> //for printf
 #include <generated/csr.h>
+#include <generated/soc.h> //for getting framebuffer resolution
 
 #ifndef CSR_GPIO_BASE
 #error The SOC needs a GPIO module (use --with_pmod_gpio in SoC generator)
@@ -112,25 +113,53 @@ void usbhmi_initialize(litex_usbhmi_obj_t *self)
     usbh_pins_init(self->pins[0], self->pins[1], self->pins[2], self->pins[3], USBH_QUEUE_SIZE);
 
     self->mousex = self->mousey = self->dx = self->dy = self->buttons = self->wheel = 0;
+#ifdef VIDEO_FRAMEBUFFER_HRES
+	self->mousex = VIDEO_FRAMEBUFFER_HRES/2;
+#endif
+#ifdef VIDEO_FRAMEBUFFER_VRES
+	self->mousey = VIDEO_FRAMEBUFFER_VRES/2;
+#endif
 
     self->t0 = micros();
     
 }
 
-static int mousex = 320, mousey = 240;
-static int mouse_dx = 0, mouse_dy = 0;
-uint8_t mousebuttons = 0;
-int mousewheel = 0;
+int mousex, mousey;
+hid_event_mouse mouse_event;
 
 //mouse event (called by the usbh_hid_poll function)
 int usbh_on_hidevent_mouse(int dx, int dy, int buttons, int wheel)
 {
   mousex += dx;
+#ifdef VIDEO_FRAMEBUFFER_HRES
+  if(mousex < 0)
+  {
+    dx -= mousex; 
+    mousex = 0;
+  }
+  if(mousex > VIDEO_FRAMEBUFFER_HRES-1)
+  {
+    dx -= mousex - (VIDEO_FRAMEBUFFER_HRES-1);
+    mousex = VIDEO_FRAMEBUFFER_HRES-1;
+  }
+#endif
   mousey += dy;
-  mouse_dx = dx;
-  mouse_dy = dy;
-  mousebuttons = buttons;
-  mousewheel = wheel;
+#ifdef VIDEO_FRAMEBUFFER_VRES
+  if(mousey < 0)
+  {
+    dy -= mousey; 
+    mousey = 0;
+  }
+  if(mousey > VIDEO_FRAMEBUFFER_VRES-1)
+  {
+    dy -= mousey - (VIDEO_FRAMEBUFFER_VRES-1);
+    mousey = VIDEO_FRAMEBUFFER_VRES-1;
+  }
+#endif
+  mouse_event.x = dx;
+  mouse_event.y = dy;
+  mouse_event.buttons = buttons;
+  mouse_event.wheel = wheel;
   
   printf("MOUSE event: x %d (%+d), y %d (%+d), buttons 0x%02X wheel %d\n", mousex, dx, mousey, dy, buttons, wheel);
   return true; //process all mouse events
@@ -149,13 +178,15 @@ void usbhmi_process(litex_usbhmi_obj_t *self)
 	float dt = (int64_t)(t1-self->t0)*1.e-6;
 	self->t0 = t1;
 
+    mousex = self->mousex;
+    mousey = self->mousey;
     usbh_hid_poll(dt); //may call events
     self->mousex = mousex;
     self->mousey = mousey;
-    self->dx = mouse_dx;
-    self->dy = mouse_dy;
-    self->buttons = mousebuttons;
-    self->wheel = mousewheel;
+    self->dx = mouse_event.x;
+    self->dy = mouse_event.y;
+    self->buttons = mouse_event.buttons;
+    self->wheel = mouse_event.wheel;
 }
 
 STATIC mp_obj_t litex_usbhmi_make_new(const mp_obj_type_t *type_in,
