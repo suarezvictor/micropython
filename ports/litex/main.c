@@ -5,9 +5,22 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <liblitesdk/litex.h>
 #include "irq.h"
 #include "uart.h"
+
+extern uint8_t _fast_text[1], _efast_text[1], _fast_text_loadaddr[1];
+extern uint8_t _fast_data[1], _efast_data[1], _fast_data_loadaddr[1];
+
+void crt0_post(void)
+{
+    //copies fast code and data sections from load address on DRAM to SRAM
+    memcpy(&_fast_text, &_fast_text_loadaddr, &_efast_text-&_fast_text);
+    memcpy(&_fast_data, &_fast_data_loadaddr, &_efast_data-&_fast_data);
+    //printf("_fast_text 0x%p, _efast_text 0x%p, _fast_text_loadaddr 0x%p, size=%08X\n", &_fast_text, &_efast_text, &_fast_text_loadaddr, &_efast_text-&_fast_text);
+    //printf("_fast_data 0x%p, _efast_data 0x%p, _fast_data_loadaddr 0x%p, size=%08X\n", &_fast_data, &_efast_data, &_fast_data_loadaddr, &_efast_data-&_fast_data);
+}
+
 
 void /*NORETURN*/ hard_reset() { ctrl_reset_write(1); for(;;); } //TODO: move to SDK
 int upython_main(int argc, char **argv, char *stack_top_arg);
@@ -20,6 +33,8 @@ void start_micropython(int argc, char **argv)
 }
 
 int main(int argc, char **argv) {
+    crt0_post();
+    
     irq_setmask(0);
     irq_setie(1);
     uart_init();

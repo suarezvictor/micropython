@@ -23,17 +23,6 @@ SECTIONS
 		_erodata = .;
 	} > main_ram
 
-	.data :
-	{
-		. = ALIGN(4);
-		_fdata = .;
-		*(.data .data.* .gnu.linkonce.d.*)
-		*(.data1)
-		_gp = ALIGN(16);
-		*(.sdata .sdata.* .gnu.linkonce.s.*)
-		_edata = .;
-	} > main_ram
-
 	.bss :
 	{
 		. = ALIGN(4);
@@ -46,8 +35,42 @@ SECTIONS
 		*(COMMON)
 		. = ALIGN(4);
 		_ebss = .;
+	} > main_ram
+
+
+
+	.fast_text : 
+	{
+        . = ALIGN (8);
+	    _fast_text_loadaddr = LOADADDR(.fast_text);
+		_fast_text = .;
+		*(.fast_text)
+        . = ALIGN (8);
+		_efast_text = .;
+	} > sram AT > main_ram
+	
+	.fast_data : 
+	{
+        . = ALIGN (8);
+	    _fast_data_loadaddr = LOADADDR(.fast_data);
+		_fast_data = .;
+		*(.fast_data)
+		_efast_data = .;
+	}  > sram AT > main_ram
+	
+
+	.data :
+	{
+		. = ALIGN(4);
+		_fdata = .;
+		*(.data .data.* .gnu.linkonce.d.*)
+		*(.data1)
+		_gp = ALIGN(16);
+		*(.sdata .sdata.* .gnu.linkonce.s.*)
+		_edata = .;
 		_end = .;
-	} > sram
+	} > main_ram
+
 }
 
 PROVIDE(_fstack = ORIGIN(sram) + LENGTH(sram) - 4);

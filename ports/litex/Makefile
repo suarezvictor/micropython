@@ -67,7 +67,7 @@ CFLAGS += $(INC) -Wall -Wno-error -std=gnu11 -ggdb $(COPT)
 CFLAGS += -Og -Wdouble-promotion
 
 # Set Include directories.
-INC += -I.
+INC += -I. -I./third-party -I./liblitesdk
 INC += -I$(BUILD)
 INC += -I$(TOP)
 INC += -I$(BUILD_DIRECTORY)/software/include
@@ -88,6 +88,7 @@ SRC_C = \
 	main.c \
 	mpmain.c \
 	isr.c \
+	./third-party/printf.c \
 	modmachine.c \
 	moduos.c \
 	modutime.c \
@@ -115,6 +116,7 @@ SRC_LITEX = \
 	$(LIBLITESDCARD_DIRECTORY)/spisdcard.c \
 	$(LIBLITESDCARD_DIRECTORY)/sdcard.c \
 	$(LEARNFPGA_LITEX_SOFTWARE)/Libs/lite_fb.c \
+	../third-party/usbhost/usb_host.c ../third-party/usbhost/usb_host_hid.c ../third-party/common/tusb_fifo.c \
 
 SRC_C += $(SRC_MOD)
 
@@ -135,7 +137,7 @@ OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LITEX:.c=.o))
 
-$(info $$OBJ is: ${OBJ})
+#$(info $$OBJ is: ${OBJ})
 
 
 all: $(BUILD)/firmware.bin
