@@ -124,8 +124,12 @@ void usbhmi_start(litex_usbhmi_obj_t *self)
 	self->mousey = VIDEO_FRAMEBUFFER_VRES/2;
 #endif
 
+#warning this should be handled inside the API
+    //waits a bit to detect already plugged devices
     self->t0 = micros();
-    
+    uint64_t tout = self->t0 + 200*1000;
+    while((int64_t)(self->t0 - tout) < 0)
+      self->t0 = micros();
 }
 
 int mousex, mousey;
@@ -182,6 +186,10 @@ hid_protocol_t usbhmi_process(litex_usbhmi_obj_t *self)
 	float dt = (int64_t)(t1-self->t0)*1.e-6;
 	self->t0 = t1;
 
+#warning the FPS limits should be internal
+    if(dt < 1./60)
+      dt = 1./60; //limit FPS for not distorting acelleration calcuations
+
     mousex = self->mousex;
     mousey = self->mousey;
     hid_protocol_t proto = usbh_hid_poll(dt); //may call events
@@ -210,7 +218,7 @@ STATIC mp_obj_t litex_usbhmi_make_new(const mp_obj_type_t *type_in,
 
     if (n_args & 1) {
          nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
-			"pin numbers should be set in pairs, but an even number of arguments was passed"));
+			"pin numbers should be set in pairs, but an odd number of arguments was passed"));
     }
     litex_usbhmi_obj_t *self = m_new_obj(litex_usbhmi_obj_t);
     self->base.type = &litex_usbhmi_type;
