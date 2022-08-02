@@ -38,7 +38,9 @@
 
 typedef int i2s_port_t, i2s_mode_t;
 typedef int i2s_bits_per_sample_t;
-const int I2S_BITS_PER_SAMPLE_16BIT=16, I2S_BITS_PER_SAMPLE_32BIT=32;
+const int I2S_BITS_PER_SAMPLE_16BIT=16;
+const int I2S_BITS_PER_SAMPLE_24BIT=24;
+const int I2S_BITS_PER_SAMPLE_32BIT=32;
 enum I2S_MODE
 {
 	I2S_MODE_MASTER = 1<<0,
@@ -112,11 +114,19 @@ void hal_audio_init(void)
     //mod_load(freq*2); //FIXME: doubling frequency correct issues with hardware samplerate
 }
 
-void audio_start()
+void hal_audio_start() { i2s_tx_start(); }
+size_t hal_audio_push_samples(int32_t *samples, size_t num_samples, bool mono)
 {
-    i2s_tx_start();
+	for(size_t i = 0; i < num_samples; ++i, ++samples)
+	{
+	  int32_t v = *samples;
+	  if(mono)
+		  i2s_tx_enqueue_sample(v);
+	  i2s_tx_enqueue_sample(v);
+	}
+	printf("pushed %d samples\n");
+	return num_samples;
 }
-
 
 #else
 #define I2S_TASK_PRIORITY        (ESP_TASK_PRIO_MIN + 1)
@@ -467,7 +477,8 @@ STATIC void machine_i2s_init_helper(machine_i2s_obj_t *self, size_t n_pos_args, 
 
     // is Bits valid?
     i2s_bits_per_sample_t bits = args[ARG_bits].u_int;
-    if ((bits != I2S_BITS_PER_SAMPLE_16BIT) &&
+    if (/*(bits != I2S_BITS_PER_SAMPLE_16BIT) &&*/
+        (bits != I2S_BITS_PER_SAMPLE_24BIT) &&
         (bits != I2S_BITS_PER_SAMPLE_32BIT)) {
         mp_raise_ValueError(MP_ERROR_TEXT("invalid bits"));
     }
@@ -831,7 +842,7 @@ STATIC mp_uint_t machine_i2s_stream_write(mp_obj_t self_in, const void *buf_in, 
         size_t num_bytes_written = copy_appbuf_to_dma(self, &appbuf);
         return num_bytes_written;
 #else
-		return size;
+		return hal_audio_push_samples((int32_t*) appbuf.buf, appbuf.len/sizeof(uint32_t), self->format == MONO); //only supports 24 and 32 bit samples
 #endif
     }
 }
