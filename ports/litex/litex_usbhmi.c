@@ -6,6 +6,8 @@
 #include <generated/csr.h>
 #include <generated/soc.h> //for getting framebuffer resolution
 
+#ifdef LITEX_SOFTUSB_HOST
+
 #ifndef CSR_GPIO_BASE
 #error The SOC needs a GPIO module (use --with_pmod_gpio in SoC generator)
 #endif
@@ -279,4 +281,5 @@ const mp_obj_type_t litex_usbhmi_type = {
 	.locals_dict = (mp_obj_t)&litex_usbhmi_locals_dict,
 };
 
+#endif // LITEX_SOFTUSB_HOST
 
