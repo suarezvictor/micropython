@@ -34,6 +34,8 @@
 #ifndef ESP32
 #warning Fix this directory
 #include "../../../litex_imgui_usb_demo/Libs/i2s/litex_i2s.h"
+#include "../../../litex_imgui_usb_demo/Libs/i2s/litex_i2s.c"
+
 typedef int i2s_port_t, i2s_mode_t;
 typedef int i2s_bits_per_sample_t;
 const int I2S_BITS_PER_SAMPLE_16BIT=16, I2S_BITS_PER_SAMPLE_32BIT=32;
@@ -99,7 +101,24 @@ enum I2S_MODE
 //   (this is standard for almost all I2S hardware, such as MEMS microphones)
 // - all sample data transfers use DMA
 
-#ifdef ESP
+#ifndef ESP
+
+void hal_audio_init(void)
+{
+    unsigned freq = i2s_tx_frequency();
+    unsigned channels = i2s_tx_get_default_channels();
+    unsigned bits = i2s_tx_get_bits();
+    printf("Audio frequency: %d, channels %d, bits %d\n", freq, channels, bits);
+    //mod_load(freq*2); //FIXME: doubling frequency correct issues with hardware samplerate
+}
+
+void audio_start()
+{
+    i2s_tx_start();
+}
+
+
+#else
 #define I2S_TASK_PRIORITY        (ESP_TASK_PRIO_MIN + 1)
 #define I2S_TASK_STACK_SIZE      (2048)
 #endif
@@ -159,9 +178,8 @@ typedef struct _machine_i2s_obj_t {
 
 STATIC mp_obj_t machine_i2s_deinit(mp_obj_t self_in);
 
-#ifndef ESP32
 const mp_obj_type_t machine_i2s_type;
-#else
+#ifdef ESP32
 // The frame map is used with the readinto() method to transform the audio sample data coming
 // from DMA memory (32-bit stereo, with the L and R channels reversed) to the format specified
 // in the I2S constructor.  e.g.  16-bit mono

@@ -102,6 +102,7 @@ SRC_C = \
 	machine_pwm.c \
 	machine_sdcard.c \
 	machine_pin.c \
+	machine_i2s.c \
 	lib/utils/sys_stdio_mphal.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/interrupt_char.c \
