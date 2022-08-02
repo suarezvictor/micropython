@@ -26,6 +26,9 @@
 #define MICROPY_PY_MACHINE_SPI_LSB          (0)
 #define MICROPY_PY_MACHINE_I2C              (1)
 #define MICROPY_PY_UTIME_MP_HAL             (1)
+#if defined(I2S_RX_MEMADDR) || defined(I2S_TX_MEMADDR)
+#define MICROPY_PY_MACHINE_I2S              (1)
+#endif
 
 // Type definitions for the specific machine
 
