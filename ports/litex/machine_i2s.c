@@ -25,50 +25,6 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
-
-#ifndef ESP32
-#warning Fix this directory
-#include "../../../litex_imgui_usb_demo/Libs/i2s/litex_i2s.h"
-#include "../../../litex_imgui_usb_demo/Libs/i2s/litex_i2s.c"
-
-typedef int i2s_port_t, i2s_mode_t;
-typedef int i2s_bits_per_sample_t;
-const int I2S_BITS_PER_SAMPLE_16BIT=16;
-const int I2S_BITS_PER_SAMPLE_24BIT=24;
-const int I2S_BITS_PER_SAMPLE_32BIT=32;
-enum I2S_MODE
-{
-	I2S_MODE_MASTER = 1<<0,
-	I2S_MODE_RX = 1<<1,
-	I2S_MODE_TX = 1<<2,
-};
-#define I2S_NUM_MAX 1
-#endif
-
-#include "py/obj.h"
-#include "py/runtime.h"
-#include "py/misc.h"
-#include "py/stream.h"
-#include "py/objstr.h"
-#include "modmachine.h"
-#include "mphalport.h"
-
-#if MICROPY_PY_MACHINE_I2S
-
-#ifdef ESP32
-#include "driver/i2s.h"
-#include "soc/i2s_reg.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
-#include "esp_task.h"
-#endif
-
 // The I2S module has 3 modes of operation:
 //
 // Mode1:  Blocking
@@ -103,6 +59,52 @@ enum I2S_MODE
 //   (this is standard for almost all I2S hardware, such as MEMS microphones)
 // - all sample data transfers use DMA
 
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+#ifndef ESP32
+#warning Fix this directory
+#include "../../../litex_imgui_usb_demo/Libs/i2s/litex_i2s.h"
+#include <math.h>
+#include "../../../litex_imgui_usb_demo/i2s/cordic.h"
+#include "../../../litex_imgui_usb_demo/Libs/i2s/litex_i2s.c" //FIXME: move to makefile
+
+typedef int i2s_port_t, i2s_mode_t;
+typedef int i2s_bits_per_sample_t;
+const int I2S_BITS_PER_SAMPLE_16BIT=16;
+const int I2S_BITS_PER_SAMPLE_24BIT=24;
+const int I2S_BITS_PER_SAMPLE_32BIT=32;
+enum I2S_MODE
+{
+	I2S_MODE_MASTER = 1<<0,
+	I2S_MODE_RX = 1<<1,
+	I2S_MODE_TX = 1<<2,
+};
+#define I2S_NUM_MAX 1
+#endif
+
+#include "py/obj.h"
+#include "py/runtime.h"
+#include "py/misc.h"
+#include "py/stream.h"
+#include "py/objstr.h"
+#include "modmachine.h"
+#include "mphalport.h"
+
+#if MICROPY_PY_MACHINE_I2S
+
+#ifdef ESP32
+#include "driver/i2s.h"
+#include "soc/i2s_reg.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "esp_task.h"
+#endif
+
 #ifndef ESP
 
 void hal_audio_init(void)
@@ -114,9 +116,15 @@ void hal_audio_init(void)
     //mod_load(freq*2); //FIXME: doubling frequency correct issues with hardware samplerate
 }
 
-void hal_audio_start() { i2s_tx_start(); }
+void hal_audio_start()
+{
+  i2s_tx_start();
+  printf("audio started\n");
+}
+
 size_t hal_audio_push_samples(int32_t *samples, size_t num_samples, bool mono)
 {
+	printf("pushing %d samples\n");
 	for(size_t i = 0; i < num_samples; ++i, ++samples)
 	{
 	  int32_t v = *samples;
@@ -124,8 +132,47 @@ size_t hal_audio_push_samples(int32_t *samples, size_t num_samples, bool mono)
 		  i2s_tx_enqueue_sample(v);
 	  i2s_tx_enqueue_sample(v);
 	}
-	printf("pushed %d samples\n");
 	return num_samples;
+}
+
+
+int /*FAST_CODE*/ synth(unsigned count)
+{
+	const int f = 1000; //Hz
+	const int bits = 24; //i2s_tx_get_bits();
+	static int cycle_count = 0;
+#ifndef AUDIO_FLOAT
+	static int64_t wt = 0;
+#else
+	static float wt = 0;
+#endif
+ 	for(size_t i = 0; i < count; i+=2)
+	{
+#ifndef AUDIO_FLOAT
+	  wt += f*4ull*CORDIC_HALF_PI/44100;
+	  if(wt > 2*CORDIC_HALF_PI)
+	  {
+	    wt -= 4ull*CORDIC_HALF_PI; //angle wrapping (-pi to pi)
+	    ++cycle_count;
+	  }
+	  int32_t sample = cordic_sin(wt)>>(CORDIC_SHIFT-bits+1);
+#else
+	  wt += 2.*M_PI*f/44100;
+	  int32_t sample = (1<<(bits-16))*sin(wt)*audio_volume;
+#endif
+
+	  i2s_tx_enqueue_sample(sample); //left
+	  i2s_tx_enqueue_sample(sample); //right
+	}
+#warning A pause here causes the demo to hang
+	//if(cycle_count > 30*f)
+	//  return -1; //request pause
+	return count;
+}
+
+int i2s_audio_send_cb(unsigned count)
+{
+  return synth(count);
 }
 
 #else
@@ -506,7 +553,10 @@ STATIC void machine_i2s_init_helper(machine_i2s_obj_t *self, size_t n_pos_args, 
     self->ibuf = args[ARG_ibuf].u_int;
     self->callback_for_non_blocking = MP_OBJ_NULL;
     self->io_mode = BLOCKING;
-#ifdef ESP32
+#ifndef ESP32
+	hal_audio_init();
+	hal_audio_start();
+#else
     self->non_blocking_mode_task = NULL;
     self->i2s_event_queue = NULL;
     self->non_blocking_mode_queue = NULL;
@@ -813,6 +863,8 @@ STATIC mp_uint_t machine_i2s_stream_read(mp_obj_t self_in, void *buf_in, mp_uint
 
 STATIC mp_uint_t machine_i2s_stream_write(mp_obj_t self_in, const void *buf_in, mp_uint_t size, int *errcode) {
     machine_i2s_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+	printf("send buffer received, 0x%p size %lu", buf_in, size);
 
     if (self->mode != (I2S_MODE_MASTER | I2S_MODE_TX)) {
         *errcode = MP_EPERM;
