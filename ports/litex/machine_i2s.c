@@ -135,6 +135,7 @@ struct i2s_queue_t
 	int32_t samples[I2S_BUFFER_SIZE];
 	size_t head, tail, count;
 } volatile i2s_queue;
+#define i2s_queue_mostly_empty() (i2s_queue.count < I2S_BUFFER_SIZE/2)
 
 size_t enqueue_samples(const int32_t *src, size_t num_samples)
 {
@@ -178,9 +179,9 @@ int i2s_audio_send_cb(unsigned count)
 {
   //int n = mp_sched_num_pending();
   //printf("*%d %d, %d\n",n, i2s_queue.head, i2s_queue.tail);
-  if(i2s_queue.count < I2S_BUFFER_SIZE/2)
-	  mp_sched_schedule(i2s_tx_callback, i2s_tx_callback_arg);
   count = hal_audio_push_samples(count, true);
+  if(i2s_queue_mostly_empty())
+	  mp_sched_schedule(i2s_tx_callback, i2s_tx_callback_arg);
   return count; 
 }
 
@@ -732,6 +733,11 @@ STATIC mp_obj_t machine_i2s_irq(mp_obj_t self_in, mp_obj_t handler) {
         self->callback_for_non_blocking = handler;
 		i2s_tx_callback = self->callback_for_non_blocking;
 		i2s_tx_callback_arg = self_in;
+		while(i2s_queue_mostly_empty())
+		{
+			//printf("Prefilling audio buffer...\n");
+	        mp_call_function_1(i2s_tx_callback, i2s_tx_callback_arg);
+		}
         hal_audio_start();
 #endif
     } else {
