@@ -67,9 +67,7 @@
 
 #ifndef ESP32
 #warning Fix this directory
-#include "../../../litex_imgui_usb_demo/Libs/i2s/litex_i2s.h"
-#include <math.h>
-#include "../../../litex_imgui_usb_demo/i2s/cordic.h"
+#include "../../../litex_imgui_usb_demo/Libs/i2s/litex_i2s.h" //I2S_FIFO_DEPTH is default sample count
 #include "../../../litex_imgui_usb_demo/Libs/i2s/litex_i2s.c" //FIXME: move to makefile
 
 typedef int i2s_port_t, i2s_mode_t;
@@ -96,7 +94,11 @@ enum I2S_MODE
 
 #if MICROPY_PY_MACHINE_I2S
 
-#ifdef ESP32
+#ifndef ESP32
+#if !MICROPY_ENABLE_SCHEDULER
+#error MICROPY_ENABLE_SCHEDULER should be defined
+#endif
+#else
 #include "driver/i2s.h"
 #include "soc/i2s_reg.h"
 #include "freertos/FreeRTOS.h"
@@ -116,7 +118,12 @@ void hal_audio_init(void)
     //mod_load(freq*2); //FIXME: doubling frequency correct issues with hardware samplerate
 }
 
-void hal_audio_start()
+//see https://programmer.group/how-does-python-interact-with-c-code-in-microphoton.html
+//callback from i2s IRQ
+volatile mp_obj_t i2s_tx_callback = mp_const_none;
+volatile mp_obj_t i2s_tx_callback_arg = mp_const_none;
+
+void hal_audio_start(void)
 {
   i2s_tx_start();
   printf("audio started\n");
@@ -124,7 +131,7 @@ void hal_audio_start()
 
 size_t hal_audio_push_samples(int32_t *samples, size_t num_samples, bool mono)
 {
-	printf("pushing %d samples\n");
+	//printf("pushing %d samples\n");
 	for(size_t i = 0; i < num_samples; ++i, ++samples)
 	{
 	  int32_t v = *samples;
@@ -135,44 +142,17 @@ size_t hal_audio_push_samples(int32_t *samples, size_t num_samples, bool mono)
 	return num_samples;
 }
 
-
-int /*FAST_CODE*/ synth(unsigned count)
-{
-	const int f = 1000; //Hz
-	const int bits = 24; //i2s_tx_get_bits();
-	static int cycle_count = 0;
-#ifndef AUDIO_FLOAT
-	static int64_t wt = 0;
-#else
-	static float wt = 0;
-#endif
- 	for(size_t i = 0; i < count; i+=2)
-	{
-#ifndef AUDIO_FLOAT
-	  wt += f*4ull*CORDIC_HALF_PI/44100;
-	  if(wt > 2*CORDIC_HALF_PI)
-	  {
-	    wt -= 4ull*CORDIC_HALF_PI; //angle wrapping (-pi to pi)
-	    ++cycle_count;
-	  }
-	  int32_t sample = cordic_sin(wt)>>(CORDIC_SHIFT-bits+1);
-#else
-	  wt += 2.*M_PI*f/44100;
-	  int32_t sample = (1<<(bits-16))*sin(wt)*audio_volume;
-#endif
-
-	  i2s_tx_enqueue_sample(sample); //left
-	  i2s_tx_enqueue_sample(sample); //right
-	}
-#warning A pause here causes the demo to hang
-	//if(cycle_count > 30*f)
-	//  return -1; //request pause
-	return count;
-}
-
 int i2s_audio_send_cb(unsigned count)
 {
-  return synth(count);
+  		
+  if(!mp_sched_schedule(i2s_tx_callback, i2s_tx_callback_arg))
+  {
+  printf("full\n");
+  static int32_t s[I2S_FIFO_DEPTH];
+   return hal_audio_push_samples(s, count, false); //send something at least
+  }
+        
+  return count;
 }
 
 #else
@@ -555,7 +535,6 @@ STATIC void machine_i2s_init_helper(machine_i2s_obj_t *self, size_t n_pos_args, 
     self->io_mode = BLOCKING;
 #ifndef ESP32
 	hal_audio_init();
-	hal_audio_start();
 #else
     self->non_blocking_mode_task = NULL;
     self->i2s_event_queue = NULL;
@@ -699,10 +678,10 @@ STATIC mp_obj_t machine_i2s_irq(mp_obj_t self_in, mp_obj_t handler) {
         mp_raise_ValueError(MP_ERROR_TEXT("invalid callback"));
     }
 
-#ifdef ESP32
     if (handler != mp_const_none) {
         self->io_mode = NON_BLOCKING;
 
+#ifdef ESP32
         // create a queue linking the MicroPython task to a FreeRTOS task
         // that manages the non blocking mode of operation
         self->non_blocking_mode_queue = xQueueCreate(1, sizeof(non_blocking_descriptor_t));
@@ -719,21 +698,28 @@ STATIC mp_obj_t machine_i2s_irq(mp_obj_t self_in, mp_obj_t handler) {
 
             mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("failed to create I2S task"));
         }
+#else
+        printf("i2s callback set: 0x%p, arg 0x%p\n", handler, self_in);
+        self->callback_for_non_blocking = handler;
+		i2s_tx_callback = self->callback_for_non_blocking;
+		i2s_tx_callback_arg = self_in;
+        hal_audio_start();
+#endif
     } else {
+
+#ifdef ESP32
         if (self->non_blocking_mode_task != NULL) {
             vTaskDelete(self->non_blocking_mode_task);
             self->non_blocking_mode_task = NULL;
         }
-
         if (self->non_blocking_mode_queue != NULL) {
             vQueueDelete(self->non_blocking_mode_queue);
             self->non_blocking_mode_queue = NULL;
         }
+#endif
 
         self->io_mode = BLOCKING;
     }
-#endif
-    self->callback_for_non_blocking = handler;
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(machine_i2s_irq_obj, machine_i2s_irq);
@@ -846,6 +832,8 @@ STATIC mp_uint_t machine_i2s_stream_read(mp_obj_t self_in, void *buf_in, mp_uint
         descriptor.direction = I2S_RX_TRANSFER;
         // send the descriptor to the task that handles non-blocking mode
         xQueueSend(self->non_blocking_mode_queue, &descriptor, 0);
+#else
+#warning implement read callback
 #endif
         return size;
     } else { // blocking or uasyncio mode
@@ -864,7 +852,7 @@ STATIC mp_uint_t machine_i2s_stream_read(mp_obj_t self_in, void *buf_in, mp_uint
 STATIC mp_uint_t machine_i2s_stream_write(mp_obj_t self_in, const void *buf_in, mp_uint_t size, int *errcode) {
     machine_i2s_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-	printf("send buffer received, 0x%p size %lu", buf_in, size);
+	//printf("send buffer received, 0x%p size %lu\n", buf_in, size);
 
     if (self->mode != (I2S_MODE_MASTER | I2S_MODE_TX)) {
         *errcode = MP_EPERM;
@@ -876,25 +864,27 @@ STATIC mp_uint_t machine_i2s_stream_write(mp_obj_t self_in, const void *buf_in, 
     }
 
     if (self->io_mode == NON_BLOCKING) {
+#ifdef ESP32
         non_blocking_descriptor_t descriptor;
         descriptor.appbuf.buf = (void *)buf_in;
         descriptor.appbuf.len = size;
         descriptor.callback = self->callback_for_non_blocking;
         descriptor.direction = I2S_TX_TRANSFER;
-#ifdef ESP32
         // send the descriptor to the task that handles non-blocking mode
         xQueueSend(self->non_blocking_mode_queue, &descriptor, 0);
+#else
+		return hal_audio_push_samples((int32_t*) buf_in, size/sizeof(int32_t), self->format == MONO)*sizeof(int32_t); //only supports 24 and 32 bit samples
 #endif
         return size;
     } else { // blocking or uasyncio mode
+#ifdef ESP32
         mp_buffer_info_t appbuf;
         appbuf.buf = (void *)buf_in;
         appbuf.len = size;
-#ifdef ESP32
         size_t num_bytes_written = copy_appbuf_to_dma(self, &appbuf);
         return num_bytes_written;
 #else
-		return hal_audio_push_samples((int32_t*) appbuf.buf, appbuf.len/sizeof(uint32_t), self->format == MONO); //only supports 24 and 32 bit samples
+		return hal_audio_push_samples((int32_t*) buf_in, size/sizeof(int32_t), self->format == MONO)*sizeof(int32_t); //only supports 24 and 32 bit samples
 #endif
     }
 }

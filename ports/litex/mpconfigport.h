@@ -28,6 +28,9 @@
 #define MICROPY_PY_UTIME_MP_HAL             (1)
 #if defined(I2S_RX_MEMADDR) || defined(I2S_TX_MEMADDR)
 #define MICROPY_PY_MACHINE_I2S              (1)
+#if !MICROPY_ENABLE_SCHEDULER
+#define MICROPY_ENABLE_SCHEDULER                (1)
+#endif
 #endif
 
 // Type definitions for the specific machine
@@ -143,7 +146,9 @@ extern const struct _mp_obj_module_t uos_module;
 #define MP_STATE_PORT MP_STATE_VM
 
 #ifdef CSR_TIMER0_BASE
-#define MICROPY_ENABLE_SCHEDULER                (1)
+#if !MICROPY_ENABLE_SCHEDULER
+#define MICROPY_ENABLE_SCHEDULER                (1) //scheduler is needed for the timer core
+#endif
 
 #define MICROPY_PORT_ROOT_POINTERS \
     struct _machine_timer_obj_t *machine_timer_obj_head; \
