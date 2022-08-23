@@ -12,7 +12,7 @@ i2s_bits = 24
 i2s_freq = 44100
 
 # create a buffer containing the pure tone samples
-samples_per_cycle = i2s_freq // 172
+samples_per_cycle = 1024 #i2s_freq // 172
 sample_size_in_bytes = 2 if i2s_bits == 16 else 4
 samples = bytearray(samples_per_cycle * sample_size_in_bytes)
 #print("bytearray len", len(samples), samples_per_cycle, sample_size_in_bytes)

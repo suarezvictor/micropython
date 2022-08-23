@@ -365,12 +365,15 @@ class BaseSoC(SoCCore):
             # I2S --------------------------------------------------------------------------------------
             i2s_mem_size = 0x40000
             i2s_fifo_depth = 256
-            # i2s rx
+            i2s_lrck_ref_freq = 100e6 #FIXME: the logic below is for avoiding this paramter to be > 100MHz
+            i2s_lrck_freq = int(44100*i2s_lrck_ref_freq/self.clk_freq)
+	            # i2s rx
             self.submodules.i2s_rx = S7I2S(
                 pads=self.platform.request("i2s_rx"),
                 fifo_depth = i2s_fifo_depth,
                 sample_width=24,
-                lrck_ref_freq=100e6, #self.clk_freq, FIXME: should accept real freq
+                lrck_ref_freq=i2s_lrck_ref_freq,
+                lrck_freq=i2s_lrck_freq,
                 frame_format=I2S_FORMAT.I2S_STANDARD,
                 concatenate_channels=False
             )
@@ -381,7 +384,8 @@ class BaseSoC(SoCCore):
                 pads=self.platform.request("i2s_tx"),
                 fifo_depth = i2s_fifo_depth,
                 sample_width=24,
-                lrck_ref_freq=100e6, #self.clk_freq, FIXME: should accept real freq
+                lrck_ref_freq=i2s_lrck_ref_freq,
+                lrck_freq=i2s_lrck_freq,
                 frame_format=I2S_FORMAT.I2S_STANDARD,
                 master=True,
                 concatenate_channels=False

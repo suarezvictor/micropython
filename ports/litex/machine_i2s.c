@@ -129,30 +129,59 @@ void hal_audio_start(void)
   printf("audio started\n");
 }
 
-size_t hal_audio_push_samples(int32_t *samples, size_t num_samples, bool mono)
+#define I2S_BUFFER_SIZE 16384
+struct i2s_queue_t
+{
+	int32_t samples[I2S_BUFFER_SIZE];
+	size_t head, tail, count;
+} volatile i2s_queue;
+
+size_t enqueue_samples(const int32_t *src, size_t num_samples)
+{
+		size_t i = 0;
+		while(i < num_samples)
+		{
+			size_t next = i2s_queue.head;
+			if(++next >= I2S_BUFFER_SIZE)
+				next = 0;
+			if(next == i2s_queue.tail)
+				break; //full
+			i2s_queue.samples[i2s_queue.head] = *src++;
+			i2s_queue.head = next;
+			++i2s_queue.count;
+			++i;
+		}
+		return i;
+}
+
+size_t hal_audio_push_samples(size_t num_samples, bool mono)
 {
 	//printf("pushing %d samples\n");
-	for(size_t i = 0; i < num_samples; ++i, ++samples)
+	size_t head = i2s_queue.head; //copy volatile data
+	for(size_t i = 0; i < num_samples; ++i)
 	{
-	  int32_t v = *samples;
+	  int32_t v = i2s_queue.samples[i2s_queue.tail];
 	  if(mono)
-		  i2s_tx_enqueue_sample(v);
+		  i2s_tx_enqueue_sample(-v);
 	  i2s_tx_enqueue_sample(v);
+	  if(i2s_queue.tail == head)
+	  	continue; //play same sample
+	  	
+	  if(++i2s_queue.tail > I2S_BUFFER_SIZE)
+	  	i2s_queue.tail = 0;
+	  --i2s_queue.count;
 	}
 	return num_samples;
 }
 
 int i2s_audio_send_cb(unsigned count)
 {
-  		
-  if(!mp_sched_schedule(i2s_tx_callback, i2s_tx_callback_arg))
-  {
-  printf("full\n");
-  static int32_t s[I2S_FIFO_DEPTH];
-   return hal_audio_push_samples(s, count, false); //send something at least
-  }
-        
-  return count;
+  //int n = mp_sched_num_pending();
+  //printf("*%d %d, %d\n",n, i2s_queue.head, i2s_queue.tail);
+  if(i2s_queue.count < I2S_BUFFER_SIZE/2)
+	  mp_sched_schedule(i2s_tx_callback, i2s_tx_callback_arg);
+  count = hal_audio_push_samples(count, true);
+  return count; 
 }
 
 #else
@@ -852,7 +881,7 @@ STATIC mp_uint_t machine_i2s_stream_read(mp_obj_t self_in, void *buf_in, mp_uint
 STATIC mp_uint_t machine_i2s_stream_write(mp_obj_t self_in, const void *buf_in, mp_uint_t size, int *errcode) {
     machine_i2s_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-	//printf("send buffer received, 0x%p size %lu\n", buf_in, size);
+	//printf("send buffer received, 0x%p size %lu, head %d, tail %d\n", buf_in, size, i2s_queue.head, i2s_queue.tail);
 
     if (self->mode != (I2S_MODE_MASTER | I2S_MODE_TX)) {
         *errcode = MP_EPERM;
@@ -872,10 +901,10 @@ STATIC mp_uint_t machine_i2s_stream_write(mp_obj_t self_in, const void *buf_in, 
         descriptor.direction = I2S_TX_TRANSFER;
         // send the descriptor to the task that handles non-blocking mode
         xQueueSend(self->non_blocking_mode_queue, &descriptor, 0);
-#else
-		return hal_audio_push_samples((int32_t*) buf_in, size/sizeof(int32_t), self->format == MONO)*sizeof(int32_t); //only supports 24 and 32 bit samples
-#endif
         return size;
+#else
+		return enqueue_samples((const int32_t *)buf_in, size/sizeof(int32_t))*sizeof(int32_t);
+#endif
     } else { // blocking or uasyncio mode
 #ifdef ESP32
         mp_buffer_info_t appbuf;
@@ -884,7 +913,7 @@ STATIC mp_uint_t machine_i2s_stream_write(mp_obj_t self_in, const void *buf_in, 
         size_t num_bytes_written = copy_appbuf_to_dma(self, &appbuf);
         return num_bytes_written;
 #else
-		return hal_audio_push_samples((int32_t*) buf_in, size/sizeof(int32_t), self->format == MONO)*sizeof(int32_t); //only supports 24 and 32 bit samples
+		return 0;
 #endif
     }
 }
