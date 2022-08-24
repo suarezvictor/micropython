@@ -571,7 +571,6 @@ int sdcard_init(void) {
 #endif
 		return 0;
         }
-/***************************************************
 
 	/* Switch speed */
 	if (sdcard_switch(SD_SWITCH_SWITCH, SD_GROUP_ACCESSMODE, SD_SPEED_SDR25) != SD_OK)
