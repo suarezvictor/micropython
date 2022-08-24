@@ -1,4 +1,3 @@
-#see https://github.com/miketeachman/micropython-i2s-examples/blob/master/examples/wavplayer.py
 import math
 import ustruct
 from umachine import I2S
@@ -12,7 +11,7 @@ i2s_bits = 24
 i2s_freq = 44100
 
 # create a buffer containing the pure tone samples
-samples_per_cycle = 1024 #i2s_freq // 172
+samples_per_cycle = i2s_freq//100 #1024
 sample_size_in_bytes = 2 if i2s_bits == 16 else 4
 samples = bytearray(samples_per_cycle * sample_size_in_bytes)
 #print("bytearray len", len(samples), samples_per_cycle, sample_size_in_bytes)
@@ -29,7 +28,7 @@ for i in range(samples_per_cycle):
 def i2s_callback(s):
 	global samples
 	num_written = audio_out.write(samples) # send samples
-	#print("written", num_written)
+	#print("bytes written", num_written)
 
 
 audio_out = I2S(0,

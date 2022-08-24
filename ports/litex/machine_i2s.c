@@ -163,7 +163,7 @@ size_t hal_audio_push_samples(size_t num_samples, bool mono)
 	{
 	  int32_t v = i2s_queue.samples[i2s_queue.tail];
 	  if(mono)
-		  i2s_tx_enqueue_sample(-v);
+		  i2s_tx_enqueue_sample(v);
 	  i2s_tx_enqueue_sample(v);
 	  if(i2s_queue.tail == head)
 	  	continue; //play same sample
@@ -180,7 +180,7 @@ int i2s_audio_send_cb(unsigned count)
   //int n = mp_sched_num_pending();
   //printf("*%d %d, %d\n",n, i2s_queue.head, i2s_queue.tail);
   count = hal_audio_push_samples(count, true);
-  if(i2s_queue_mostly_empty())
+  if(i2s_tx_callback != mp_const_none &&  i2s_queue_mostly_empty())
 	  mp_sched_schedule(i2s_tx_callback, i2s_tx_callback_arg);
   return count; 
 }
@@ -751,6 +751,9 @@ STATIC mp_obj_t machine_i2s_irq(mp_obj_t self_in, mp_obj_t handler) {
             vQueueDelete(self->non_blocking_mode_queue);
             self->non_blocking_mode_queue = NULL;
         }
+#else
+		i2s_tx_callback = mp_const_none;
+		i2s_tx_callback_arg = mp_const_none;
 #endif
 
         self->io_mode = BLOCKING;
