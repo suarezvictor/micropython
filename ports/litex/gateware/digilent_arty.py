@@ -399,6 +399,7 @@ class BaseSoC(SoCCore):
             self.add_constant("I2S_RX_MEMADDR", self.mem_map["i2s_rx"]);
             self.add_constant("I2S_TX_MEMADDR", self.mem_map["i2s_tx"]);
             self.add_constant("I2S_FIFO_DEPTH", i2s_fifo_depth);
+            self.add_constant("I2S_CLK_RATIO", self.clk_freq/i2s_lrck_ref_freq); #FIXME: this is as cause of issues with clocks > 100MHz
 
     def add_mmcm(self, freqs={}):
             self.cd_mmcm_clkout = {} 
