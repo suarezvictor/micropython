@@ -47,6 +47,15 @@ int main(int argc, char **argv) {
     hard_reset();
 }
 
+
+size_t strlen(const char *s) {
+    const char *ss = s;
+    while (*ss) {
+        ++ss;
+    }
+    return ss - s;
+}
+
 #ifndef CSR_TIMER0_UPTIME_CYCLES_ADDR
 #warning DELAY FUNCTION IS NOT ACCURATE, use uptime method (--timer-uptime option at SoC generation)
 #endif

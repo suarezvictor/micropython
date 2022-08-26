@@ -15,14 +15,6 @@
 
 #if MICROPY_PY_MACHINE
 
-size_t strlen(const uint8_t *s) {
-    const uint8_t *ss = s;
-    while (*ss) {
-        ++ss;
-    }
-    return ss - s;
-}
-
 STATIC mp_obj_t machine_identifier(void) {
 #ifdef CSR_IDENTIFIER_MEM_BASE
     int i;

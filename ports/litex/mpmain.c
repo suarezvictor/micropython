@@ -174,7 +174,7 @@ int upython_main(int argc, char **argv, char *stack_top_arg)
 //heap_start = (void*)MICROPY_HW_SDRAM_BASE + 3*MICROPY_HW_SDRAM_SIZE/4;
 //heap_end = (void*)MICROPY_HW_SDRAM_BASE + MICROPY_HW_SDRAM_SIZE;
 
-        #if 1//def _DEBUG        
+        #ifdef _DEBUG        
         printf("RAM base at 0x%p, heap at 0x%p, end=0x%p (%d KiB)\n", (void *)MICROPY_HW_SDRAM_BASE, heap_start, heap_end, ((char*)heap_end-(char*)heap_start)/1024);
         #endif
         gc_init(heap_start, heap_end);
@@ -192,13 +192,9 @@ int upython_main(int argc, char **argv, char *stack_top_arg)
     // if an SD card is present then mount it on /sd/
     if (sdcard_is_present()) {
         bool mounted_sdcard = init_sdcard_fs();
-        /*
-        printf("Mounting existing SD card at boot...\n");
-        if(mounted_sdcard)
-          printf("SD card mounted\n");
-        else
-          printf("SD card NOT mounted\n");
-        */
+
+        //printf("Mounting existing SD card at boot...\n");
+        //printf(mounted_sdcard ? "SD card mounted\n" : "SD card NOT mounted\n");
 
         if(mounted_sdcard)
         {
