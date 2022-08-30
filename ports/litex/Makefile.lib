@@ -102,6 +102,7 @@ SRC_C = \
 	litex_dma.c \
 	litex_video.c \
 	litex_usbhmi.c \
+	dpg_lite/moddpg_lite.c \
 	machine_hw_spi.c \
 	machine_timer.c \
 	machine_pwm.c \
