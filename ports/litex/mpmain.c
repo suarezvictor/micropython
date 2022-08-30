@@ -59,7 +59,7 @@ void do_str(const char *src, mp_parse_input_kind_t input_kind) {
 #endif
 
 #ifdef MICROPY_HW_SDRAM_AVAIL
-extern char _edata_rom, _emain_ram;
+extern char _end, _emain_ram;
 #endif
 
 #if MICROPY_HW_SDCARD_MOUNT_AT_BOOT
@@ -163,7 +163,11 @@ int upython_main(int argc, char **argv, char *stack_top_arg)
 #if defined(LEARNFPGA_LITEX)
 #warning LEARNFPGA_LITEX and MICROPY_HW_SDRAM_SIZE defined
 #endif
-        void *heap_start = &_edata_rom, *heap_end = &_emain_ram; //TODO: move this logic to the C SDK
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//NOTE: the previous value of heap_start was a BIG BUG, since it included varialbes of .sbss section.
+		//It prevented to link micropython as a library in other projects. Now fixed and put after the end of ALL variables
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        void *heap_start = &_end, *heap_end = &_emain_ram; //TODO: move this logic to the C SDK
 
         #ifdef CSR_VIDEO_FRAMEBUFFER_BASE
         #warning A ram region for the video framebuffer should be allocated in linker scripts
@@ -171,8 +175,7 @@ int upython_main(int argc, char **argv, char *stack_top_arg)
         if(heap_start <= video_base && heap_end > video_base)
             heap_end = video_base; //check if framebuffer overlaps
         #endif
-//heap_start = (void*)MICROPY_HW_SDRAM_BASE + 3*MICROPY_HW_SDRAM_SIZE/4;
-//heap_end = (void*)MICROPY_HW_SDRAM_BASE + MICROPY_HW_SDRAM_SIZE;
+
 
         #ifdef _DEBUG        
         printf("RAM base at 0x%p, heap at 0x%p, end=0x%p (%d KiB)\n", (void *)MICROPY_HW_SDRAM_BASE, heap_start, heap_end, ((char*)heap_end-(char*)heap_start)/1024);
@@ -186,7 +189,8 @@ int upython_main(int argc, char **argv, char *stack_top_arg)
 #endif
 
     mp_init();
-    //printf("C stack at %p, original %p\n", stack_top, &_fstack);
+    //this was to spot the above heap_start bug 
+    //printf("argc %d, argv %s, C-stack at: 0x%p, (at 0x%p), should be 0x%p, original 0x%p\n", argc, argv[0], stack_top, &stack_top, stack_top_arg, &_fstack);
 
     #if MICROPY_HW_SDCARD_MOUNT_AT_BOOT
     // if an SD card is present then mount it on /sd/
@@ -274,6 +278,13 @@ void gc_collect(void) {
     //gc_dump_info();
 }
 #endif
+
+void start_micropython(int argc, char **argv)
+{
+	char *dummy = &_fstack; //it doesn't matter what references since only address is taken
+    while(upython_main(argc, argv, &dummy) == 0)
+        /*soft_reset()*/;
+}
 
 #if !MICROPY_READER_VFS
 mp_lexer_t *mp_lexer_new_from_file(const char *filename) {

@@ -23,14 +23,7 @@ void crt0_post(void)
 
 
 void /*NORETURN*/ hard_reset() { ctrl_reset_write(1); for(;;); } //TODO: move to SDK
-int upython_main(int argc, char **argv, char *stack_top_arg);
-void start_micropython(int argc, char **argv)
-{
-    //safe way to determine stack top: no other variables in this function //TODO: use alloca()
-    int stack_dummy;
-    while(upython_main(argc, argv, (char*)&stack_dummy) == 0)
-        /*soft_reset()*/;
-}
+void start_micropython(int argc, char **argv);
 
 int main(int argc, char **argv) {
     crt0_post();

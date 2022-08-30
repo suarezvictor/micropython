@@ -53,7 +53,8 @@ SRC_MOD += $(addprefix $(OOFATFS_DIR)/,\
 	)
 endif
 CFLAGS += $(CFLAGS_MOD)
-CXXFLAGS += -fno-threadsafe-statics -fno-exceptions -fno-rtti -fno-builtin-malloc -std=c++11 $(CFLAGS) #$(CPUFLAGS) 
+CXXFLAGS += -fno-threadsafe-statics -fno-exceptions -fno-rtti -fno-builtin-malloc -std=c++11 $(INC) $(CPUFLAGS) 
+CXXFLAGS += -DLEARNFPGA_LITEX 
 
 # Include py core make definitions
 include $(TOP)/py/py.mk
@@ -69,7 +70,7 @@ ASFLAGS += -I$(BUILD_DIRECTORY)/software/include # For crt0.S.
 CFLAGS += $(CPUFLAGS)
 #CFLAGS += $(INC) -Wall -Werror -std=gnu11 -ggdb $(COPT)
 CFLAGS += $(INC) -Wall -Wno-error -std=gnu11 -ggdb $(COPT)
-CFLAGS += -Og -Wdouble-promotion -fno-builtin-printf
+CFLAGS += -Og -Wdouble-promotion -fno-builtin-printf -DMICROPY_USE_INTERNAL_PRINTF=0
 
 # Set Include directories.
 INC += -I. -I./third-party -I./liblitesdk
@@ -121,17 +122,19 @@ SRC_LITEX = \
 	$(LIBLITESDCARD_DIRECTORY)/spisdcard.c \
 	$(LIBLITESDCARD_DIRECTORY)/sdcard.c \
 	$(LEARNFPGA_LITEX_SOFTWARE)/Libs/lite_fb.c \
-	../third-party/usbhost/usb_host.c ../third-party/usbhost/usb_host_hid.c ../third-party/common/tusb_fifo.c \
+	../third-party/usbhost/usb_host.c \
+	../third-party/usbhost/usb_host_hid.c \
+	../third-party/common/tusb_fifo.c \
 
 SRC_C += $(SRC_MOD)
 SRC_IMGUI = \
-    $(LEARNFPGA_LITEX_SOFTWARE)/Programs/imgui_test.cpp \
     $(LEARNFPGA_LITEX_SOFTWARE)/Libs/imgui/imgui.cpp \
     $(LEARNFPGA_LITEX_SOFTWARE)/Libs/imgui/imgui_sw.cpp \
     $(LEARNFPGA_LITEX_SOFTWARE)/Libs/imgui/imgui_draw.cpp \
     $(LEARNFPGA_LITEX_SOFTWARE)/Libs/imgui/imgui_tables.cpp \
     $(LEARNFPGA_LITEX_SOFTWARE)/Libs/imgui/imgui_widgets.cpp \
     $(LEARNFPGA_LITEX_SOFTWARE)/Libs/imgui/imgui_demo.cpp \
+#    $(LEARNFPGA_LITEX_SOFTWARE)/Programs/imgui_test.cpp \
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
 	bus/softspi.c \
@@ -149,6 +152,7 @@ OBJ =  $(CRT0_O) $(addprefix $(BUILD)/, $(SRC_S:.S=.o)) $(PY_O) $(addprefix $(BU
 OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LITEX:.c=.o))
+# OBJ += $(addprefix $(BUILD)/, $(SRC_IMGUI:.cpp=.o))
 
 #$(info $$OBJ is: ${OBJ})
 
