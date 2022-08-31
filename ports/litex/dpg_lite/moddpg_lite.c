@@ -19,42 +19,14 @@ void dpg_end_frame(void);
 #include "cimgui.h"
 #endif
 
-#ifdef USE_CIMGUI
-STATIC mp_obj_t text(mp_obj_t arg) {
-
-    GET_STR_DATA_LEN(arg, s, len);
-    printf("text: %.*s\n", len, s);
-    igBegin("Color", NULL, 0);
-    static int color_r = 128;
-    igSliderInt("R", &color_r, 0, 255, "%d", 0);
-    color_r = (--color_r)  & 0xFF;
-    igEnd();
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_1(text_obj, text);
-#else
-STATIC mp_obj_t add_text(mp_obj_t arg) {
-
-    GET_STR_DATA_LEN(arg, s, len);
-    printf("add_text: %.*s\n", len, s);
-    dpg_demo();
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_1(add_text_obj, add_text);
-#endif
-
 STATIC mp_obj_t create_context() {
-#if 0//def USE_CIMGUI
-    printf("calling igCreateContext\n");
-	igCreateContext(NULL);
-#else
 	dpg_create_context();
-#endif
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_0(create_context_obj, create_context);
 
 STATIC mp_obj_t new_frame() {
+#warning fix the timing issue
 #if 0//def USE_CIMGUI
     printf("calling igNewFrame\n");
 	igNewFrame();
@@ -66,27 +38,58 @@ STATIC mp_obj_t new_frame() {
 MP_DEFINE_CONST_FUN_OBJ_0(new_frame_obj, new_frame);
 
 STATIC mp_obj_t render() {
-#if 0 //def USE_CIMGUI
-    printf("calling igRender\n");
-	igRender();
-#else
 	dpg_render();
-#endif
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_0(render_obj, render);
 
 STATIC mp_obj_t end_frame() {
-#if 0//def USE_CIMGUI
-    printf("calling igNewFrame\n");
-	igEndFrame();
-#else
 	dpg_end_frame();
-#endif
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_0(end_frame_obj, end_frame);
 
+
+#ifdef USE_CIMGUI
+STATIC mp_obj_t begin(mp_obj_t name, mp_obj_t p_open) {
+    GET_STR_DATA_LEN(name, s, len);
+    igBegin(s, NULL, 0);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_2(begin_obj, begin);
+
+STATIC mp_obj_t end() {
+	igEnd();
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_0(end_obj, end);
+
+STATIC mp_obj_t text(mp_obj_t arg) {
+
+    GET_STR_DATA_LEN(arg, s, len);
+    /*
+    printf("text: %.*s\n", len, s);
+    static int color_r = 128;
+    igSliderInt("R", &color_r, 0, 255, "%d", 0);
+    color_r = (--color_r)  & 0xFF;
+    */
+    igTextUnformatted(s, s+len);
+
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(text_obj, text);
+
+#else //!USE_CIMGUI
+
+STATIC mp_obj_t add_text(mp_obj_t arg) {
+
+    GET_STR_DATA_LEN(arg, s, len);
+    printf("add_text: %.*s\n", len, s);
+    dpg_demo();
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(add_text_obj, add_text);
+#endif
 
 STATIC const mp_rom_map_elem_t dpg_lite_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_dpg_lite) },
@@ -94,10 +97,12 @@ STATIC const mp_rom_map_elem_t dpg_lite_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_new_frame), MP_ROM_PTR(&new_frame_obj) },
     { MP_ROM_QSTR(MP_QSTR_render), MP_ROM_PTR(&render_obj) },
     { MP_ROM_QSTR(MP_QSTR_end_frame), MP_ROM_PTR(&end_frame_obj) },
-#ifndef USE_CIMGUI
-    { MP_ROM_QSTR(MP_QSTR_add_text), MP_ROM_PTR(&add_text_obj) },
-#else
+#ifdef USE_CIMGUI
     { MP_ROM_QSTR(MP_QSTR_text), MP_ROM_PTR(&text_obj) },
+    { MP_ROM_QSTR(MP_QSTR_begin), MP_ROM_PTR(&begin_obj) },
+    { MP_ROM_QSTR(MP_QSTR_end), MP_ROM_PTR(&end_obj) },
+#else
+    { MP_ROM_QSTR(MP_QSTR_add_text), MP_ROM_PTR(&add_text_obj) },
 #endif
 };
 

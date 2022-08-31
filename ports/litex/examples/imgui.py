@@ -1,27 +1,21 @@
-#https://pyimgui.readthedocs.io/en/latest/guide/first-steps.html
-#import imgui
+# Dear ImGui example from Micropython
+# based on https://github.com/pyimgui/pyimgui/blob/master/doc/source/guide/first-steps.rst
+#
+# Copyright (C) 2016 Michał Jaworski & pyimgui developers
+# Copyright (C) 2022 Victor Suarez Rovere <suarezvictor@gmail.com>
+# BSD-3-Clause license
+
 import dpg_lite as imgui
-
-# initilize imgui context (see documentation)
 imgui.create_context()
-#imgui.get_io().display_size = 100, 100
-#imgui.get_io().fonts.get_tex_data_as_rgba32()
 
-# start new frame context
+def example_ui():
+	imgui.begin("My window", True)
+	imgui.text("Hello world!")
+	imgui.end()
+
 while True:
 	imgui.new_frame()
-
-	# open new window context
-	#imgui.begin("Your first window!", True)
-
-	# draw text label inside of current window
-	imgui.text("Hello world!")
-
-	# close current window context
-	#imgui.end()
-
-	# pass all drawing comands to the rendering pipeline
-	# and close frame context
+	example_ui()
 	imgui.render()
 	imgui.end_frame()
 
