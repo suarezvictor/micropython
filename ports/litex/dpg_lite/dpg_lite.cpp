@@ -109,7 +109,7 @@ extern "C" void dpg_lite_init(void)
 
     printf("Starting ImGui...\n");
 }
-
+/*
 extern "C" void dpg_demo(void)
 {
   static int color_r = 0x80, color_g = 0, color_b = 0;
@@ -124,7 +124,7 @@ extern "C" void dpg_demo(void)
   if(color_r++>=255) color_r=0; //automatic movement
   //return IM_COL32(color_r, color_g, color_b, 0);
 }
-
+*/
 extern "C" void dpg_create_context(void)
 {
     dpg_lite_init();

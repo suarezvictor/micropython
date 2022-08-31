@@ -11,7 +11,6 @@
 //TODO: add API header
 void dpg_create_context(void);
 void dpg_new_frame(float dt);
-void dpg_demo(void);
 void dpg_render(void);
 void dpg_end_frame(void);
 
@@ -25,7 +24,11 @@ STATIC mp_obj_t text(mp_obj_t arg) {
 
     GET_STR_DATA_LEN(arg, s, len);
     printf("text: %.*s\n", len, s);
-    dpg_demo();
+    igBegin("Color", NULL, 0);
+    static int color_r = 128;
+    igSliderInt("R", &color_r, 0, 255, "%d", 0);
+    color_r = (--color_r)  & 0xFF;
+    igEnd();
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(text_obj, text);
