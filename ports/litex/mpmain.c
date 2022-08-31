@@ -172,8 +172,12 @@ int upython_main(int argc, char **argv, char *stack_top_arg)
         #ifdef CSR_VIDEO_FRAMEBUFFER_BASE
         #warning A ram region for the video framebuffer should be allocated in linker scripts
         void *video_base = (void *) VIDEO_FRAMEBUFFER_BASE; //TODO: move framebuffer logic to the C SDK
-        if(heap_start <= video_base && heap_end > video_base)
-            heap_end = video_base; //check if framebuffer overlaps
+        if(heap_start <= video_base && heap_end > video_base) //check if framebuffer overlaps
+        {
+            //heap_end = video_base; //WARNING: this will collide with malloc, since based on sbrk that used linker script's _end
+            //it's better instead to use the RAM after the framebuffer up to the end of the SDRAM
+            heap_start = ((char *)video_base) + (VIDEO_FRAMEBUFFER_HRES*VIDEO_FRAMEBUFFER_VRES*VIDEO_FRAMEBUFFER_DEPTH/8)*4; //supports 4 framebuffers
+        }
         #endif
 
 
@@ -281,8 +285,8 @@ void gc_collect(void) {
 
 void start_micropython(int argc, char **argv)
 {
-	char *dummy = &_fstack; //it doesn't matter what references since only address is taken
-    while(upython_main(argc, argv, &dummy) == 0)
+	int dummy; //it doesn't matter what references since only address is taken
+    while(upython_main(argc, argv, (char*)&dummy) == 0)
         /*soft_reset()*/;
 }
 
