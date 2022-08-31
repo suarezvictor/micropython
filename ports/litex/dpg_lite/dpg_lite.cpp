@@ -1,5 +1,6 @@
 // Copyright (C) 2021-2022 Victor Suarez Rovere <suarezvictor@gmail.com>
 // License: BSD-2-Clause
+#define USE_CIMGUI
 
 
 /*
@@ -18,8 +19,8 @@ with dpg.window(label="Example Window"):
     dpg.add_slider_float(label="float", default_value=0.273, max_value=1)
 
 dpg.setup_dearpygui()
-dpg.show_viewport()
-dpg.start_dearpygui()
+dpg.show_viewport() #opens window
+dpg.start_dearpygui() #blocks until closed
 dpg.destroy_context()
 
 WITH example (with statement calls __enter__ and __exit__):
@@ -64,7 +65,7 @@ static void *custom_malloc(size_t size, void* user_data)
   if(!ptr) return ptr;
   *ptr++ = size;
   alloc_total += size;
-  printf("alloc: 0x%p, size %d, total %d\n", ptr, size, alloc_total);
+  //printf("alloc: 0x%p, size %d, total %d\n", ptr, size, alloc_total);
   return ptr;
 }
 
@@ -75,12 +76,12 @@ static void custom_free(void* ptr, void* user_data)
   size_t *ptra = (size_t*)ptr;
   size_t size = *(--ptra);
   alloc_total -= size;
-  printf("free: 0x%p, size %d, total %d\n", ptr, size, alloc_total);
+  //printf("free: 0x%p, size %d, total %d\n", ptr, size, alloc_total);
   free(ptra);
 }
 
 
-void dpg_lite_init()
+extern "C" void dpg_lite_init(void)
 {
   fb_init();
   fb_set_dual_buffering(1);
@@ -109,10 +110,8 @@ void dpg_lite_init()
     printf("Starting ImGui...\n");
 }
 
-ImColor do_dpg_ui()
+extern "C" void dpg_demo(void)
 {
-  ImGuiIO& io = ImGui::GetIO();
-
   static int color_r = 0x80, color_g = 0, color_b = 0;
   ImGui::SetNextWindowPos(ImVec2(100, 100));        
   ImGui::SetNextWindowSize(ImVec2(180, 100));
@@ -122,7 +121,8 @@ ImColor do_dpg_ui()
   ImGui::SliderInt("B", &color_b, 0, 255);
   ImGui::End();
 
-  return IM_COL32(color_r, color_g, color_b, 0);
+  if(color_r++>=255) color_r=0; //automatic movement
+  //return IM_COL32(color_r, color_g, color_b, 0);
 }
 
 extern "C" void dpg_create_context(void)
@@ -130,19 +130,29 @@ extern "C" void dpg_create_context(void)
     dpg_lite_init();
 }
 
-extern "C" void dpg_test_ui(float dt)
+extern "C" void dpg_new_frame(float dt)
 {
     ImGuiIO& io = ImGui::GetIO();
     io.DisplaySize = ImVec2(VIDEO_FRAMEBUFFER_HRES, VIDEO_FRAMEBUFFER_VRES);
     
-    //TODO: move button & wheel logic
-    //ImVec2 p = io.MousePos;
-    //int mousex = (int)p.x, mousey = (int)p.y;
 
     io.DeltaTime = dt;
 
     ImGui::NewFrame();
-    uint32_t bgcolor = do_dpg_ui();
+}
+
+extern "C" void dpg_end_frame(void)
+{
+    ImGui::EndFrame();
+}
+
+extern "C" void dpg_render(void)
+{
+    //ImGuiIO& io = ImGui::GetIO();
+    //TODO: move button & wheel logic
+    //ImVec2 p = io.MousePos;
+    //int mousex = (int)p.x, mousey = (int)p.y;
+
     ImGui::Render();
 
     imgui_sw::paint_imgui((uint32_t*)fb_base,VIDEO_FRAMEBUFFER_HRES,VIDEO_FRAMEBUFFER_VRES);
@@ -153,7 +163,12 @@ extern "C" void dpg_test_ui(float dt)
     fb_line(mousex, mousey-5, mousex, mousey+6, IM_COL32(0, 255, 0, 0));
 */
     fb_swap_buffers();
-    fb_fillrect(0, 0, VIDEO_FRAMEBUFFER_HRES-1, VIDEO_FRAMEBUFFER_VRES-1, bgcolor);
-    //fb_clear();
+    //fb_fillrect(0, 0, VIDEO_FRAMEBUFFER_HRES-1, VIDEO_FRAMEBUFFER_VRES-1, bgcolor);
+    fb_clear();
 }
+
+#ifdef USE_CIMGUI
+#include "cimgui.h"
+#include "cimgui.cpp"
+#endif
 
