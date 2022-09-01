@@ -2,41 +2,11 @@
 // License: BSD-2-Clause
 #define USE_CIMGUI
 
-
-/*
-https://dearpygui.readthedocs.io/en/latest/tutorials/first-steps.html
-
-#import dearpygui.dearpygui as dpg
-import dpg_lite as dpg
-
-dpg.create_context()
-dpg.create_viewport(title='Custom Title', width=600, height=300)
-
-with dpg.window(label="Example Window"):
-    dpg.add_text("Hello, world")
-    dpg.add_button(label="Save")
-    dpg.add_input_text(label="string", default_value="Quick brown fox")
-    dpg.add_slider_float(label="float", default_value=0.273, max_value=1)
-
-dpg.setup_dearpygui()
-dpg.show_viewport() #opens window
-dpg.start_dearpygui() #blocks until closed
-dpg.destroy_context()
-
-WITH example (with statement calls __enter__ and __exit__):
-class Demo:
-    def __enter__(self):
-        print(" calling to __enter__ method")
-        return "True"
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        print(" calling to __exit__ method")
-*/
 #include <cstdio>
-#include <malloc.h>
 
 extern "C" {
 #include "lite_fb.h"
+#include "py/gc.h"
 }
 
 #include "imgui.h"
@@ -61,7 +31,7 @@ static size_t alloc_total = 0;
 static void *custom_malloc(size_t size, void* user_data)
 {
   IM_UNUSED(user_data);
-  size_t *ptr = (size_t *) malloc(size+sizeof(size_t));
+  size_t *ptr = (size_t *) gc_alloc(size+sizeof(size_t), false);
   if(!ptr) return ptr;
   *ptr++ = size;
   alloc_total += size;
@@ -77,7 +47,7 @@ static void custom_free(void* ptr, void* user_data)
   size_t size = *(--ptra);
   alloc_total -= size;
   //printf("free: 0x%p, size %d, total %d\n", ptr, size, alloc_total);
-  free(ptra);
+  gc_free(ptra);
 }
 
 

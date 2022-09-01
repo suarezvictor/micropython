@@ -33,7 +33,7 @@ include ../../py/mkenv.mk
 ################################################################################
 
 MICROPY_VFS_FAT = $(shell egrep "(CSR_SDCORE_BASE|CSR_SPISDCARD_BASE)" ${BUILD_DIRECTORY}/software/include/generated/csr.h | wc -l)
-$(info $$MICROPY_VFS_FAT is: ${MICROPY_VFS_FAT})
+#$(info $$MICROPY_VFS_FAT is: ${MICROPY_VFS_FAT})
 
 #TODO:it's unclear why py.mk (that has this logic) doesn't get called
 ################################################################################
@@ -52,7 +52,7 @@ SRC_MOD += $(addprefix $(OOFATFS_DIR)/,\
 	)
 endif
 CFLAGS += $(CFLAGS_MOD)
-CXXFLAGS += -fno-threadsafe-statics -fno-exceptions -fno-rtti -fno-builtin-malloc -std=c++11 $(CPUFLAGS) 
+CXXFLAGS += -fno-threadsafe-statics -fno-exceptions -fno-rtti -fno-builtin-malloc -std=c++11 -fno-use-cxa-atexit $(CPUFLAGS) 
 #CXXFLAGS += -DLEARNFPGA_LITEX
 
 # Include py core make definitions
@@ -69,8 +69,8 @@ ASFLAGS += -I$(BUILD_DIRECTORY)/software/include # For crt0.S.
 CFLAGS += $(CPUFLAGS)
 #CFLAGS += $(INC) -Wall -Werror -std=gnu11 -ggdb $(COPT)
 CFLAGS += $(INC) -Wall -Wno-error -std=gnu11 -ggdb $(COPT)
-CFLAGS += -Og -Wdouble-promotion -fno-builtin-printf -DMICROPY_USE_INTERNAL_PRINTF=0
-CXXFLAGS += -Og -Wdouble-promotion -fno-builtin-printf
+CFLAGS += -Og -Wdouble-promotion
+CXXFLAGS += -Og -Wdouble-promotion -DIMGUI_USE_BGRA_PACKED_COLOR
 
 # Set Include directories.
 INC += -I. -I./third-party -I./liblitesdk
@@ -80,7 +80,7 @@ INC += -I$(BUILD_DIRECTORY)/software/include
 INC += -I$(SOC_DIRECTORY)/software/include
 INC += -I$(CPU_DIRECTORY)
 INC += -I$(LEARNFPGA_LITEX_SOFTWARE)/Libs
-INC += -I$(LEARNFPGA_LITEX_SOFTWARE)/Libs/imgui  -I$(LEARNFPGA_LITEX_SOFTWARE)/Libs
+INC += -Iimgui  -I$(LEARNFPGA_LITEX_SOFTWARE)/Libs
 CXXFLAGS += $(INC)
 
 # Set LDFLAGS.
@@ -93,7 +93,10 @@ LIBS = -Wl,-lc -Wl,-lm
 
 # Set Sources.
 SRC_C = \
+	main.c \
 	mpmain.c \
+	isr.c \
+	./third-party/printf.c \
 	modmachine.c \
 	moduos.c \
 	modutime.c \
@@ -117,6 +120,7 @@ SRC_C = \
 	lib/mp-readline/readline.c
 
 SRC_CPP = \
+	cppglue.cpp \
 	dpg_lite/dpg_lite.cpp \
 
 #lib sources with no need of QSTR extraction
@@ -132,13 +136,12 @@ SRC_LITEX = \
 
 SRC_C += $(SRC_MOD)
 SRC_IMGUI = \
-    $(LEARNFPGA_LITEX_SOFTWARE)/Libs/imgui/imgui.cpp \
-    $(LEARNFPGA_LITEX_SOFTWARE)/Libs/imgui/imgui_sw.cpp \
-    $(LEARNFPGA_LITEX_SOFTWARE)/Libs/imgui/imgui_draw.cpp \
-    $(LEARNFPGA_LITEX_SOFTWARE)/Libs/imgui/imgui_tables.cpp \
-    $(LEARNFPGA_LITEX_SOFTWARE)/Libs/imgui/imgui_widgets.cpp \
-    $(LEARNFPGA_LITEX_SOFTWARE)/Libs/imgui/imgui_demo.cpp \
-#    $(LEARNFPGA_LITEX_SOFTWARE)/Programs/imgui_test.cpp \
+    imgui/imgui.cpp \
+    imgui/imgui_sw.cpp \
+    imgui/imgui_draw.cpp \
+    imgui/imgui_tables.cpp \
+    imgui/imgui_widgets.cpp \
+    imgui/imgui_demo.cpp \
 
 DRIVERS_SRC_C = $(addprefix drivers/,\
 	bus/softspi.c \
@@ -158,7 +161,7 @@ OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LITEX:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_CPP:.cpp=.o))
-# OBJ += $(addprefix $(BUILD)/, $(SRC_IMGUI:.cpp=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_IMGUI:.cpp=.o))
 
 #$(info $$OBJ is: ${OBJ})
 
@@ -172,15 +175,10 @@ SRC_QSTR += $(SRC_C) $(SRC_LIB)
 $(CRT0_O): $(CRT0_S)
 	$(CC) -c $(ASFLAGS) $(CFLAGS) $(CRT0FLAGS) -o $@ $<
 
-$(BUILD)/firmware.elf: $(CRT0_O) $(BUILD)/main.o $(OBJ_LITEX) $(BUILD)/isr.o $(BUILD)/libmicropython.a 
+$(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(CC) $(LDFLAGS) -o $@ $(CRT0_O) $(BUILD)/main.o $(OBJ_LITEX) $(BUILD)/isr.o -L$(BUILD) -lmicropython $(LIBS)
+	$(Q)$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 	$(Q)$(SIZE) $@
-
-$(BUILD)/libmicropython.a: $(OBJ)
-	$(ECHO) "LIB $@"
-	$(Q)$(AR) -cq $@ $^
-	ranlib $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(Q)$(OBJCOPY) -O binary $^ $(BUILD)/firmware.bin
