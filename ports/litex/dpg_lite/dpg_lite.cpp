@@ -118,23 +118,53 @@ extern "C" void dpg_end_frame(void)
 
 extern "C" void dpg_render(void)
 {
-    //ImGuiIO& io = ImGui::GetIO();
-    //TODO: move button & wheel logic
-    //ImVec2 p = io.MousePos;
-    //int mousex = (int)p.x, mousey = (int)p.y;
+    ImGuiIO& io = ImGui::GetIO();
+    ImVec2 p = io.MousePos;
+    int mousex = (int)p.x, mousey = (int)p.y;
 
     ImGui::Render();
 
     imgui_sw::paint_imgui((uint32_t*)fb_base,VIDEO_FRAMEBUFFER_HRES,VIDEO_FRAMEBUFFER_VRES);
-/*
+
     //draw the mouse pointer as a cross
     fb_set_cliprect(0, 0, VIDEO_FRAMEBUFFER_HRES-1, VIDEO_FRAMEBUFFER_VRES-1);
     fb_line(mousex-5, mousey, mousex+6, mousey, IM_COL32(0, 255, 0, 0));
     fb_line(mousex, mousey-5, mousex, mousey+6, IM_COL32(0, 255, 0, 0));
-*/
+
     fb_swap_buffers();
     //fb_fillrect(0, 0, VIDEO_FRAMEBUFFER_HRES-1, VIDEO_FRAMEBUFFER_VRES-1, bgcolor);
     fb_clear();
+}
+
+
+extern "C" int dpg_hidevent_mouse(int dx, int dy, int buttons, int wheel)
+{
+
+  ImGuiIO& io = ImGui::GetIO();
+
+  //TODO: AddMousePosEvent in ImGui v1.88
+  io.MousePos.x += dx;
+  if(io.MousePos.x < 0) io.MousePos.x = 0;
+  if(io.MousePos.x > FB_WIDTH-1) io.MousePos.x = FB_WIDTH-1;
+  io.MousePos.y += dy;
+  if(io.MousePos.y < 0) io.MousePos.y = 0;
+  if(io.MousePos.y > FB_WIDTH-1) io.MousePos.y = FB_HEIGHT-1;
+
+  io.MouseWheel = wheel; //wheel delta
+  for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++)
+    io.MouseDown[i] = (buttons >> i) & 1;
+
+  //printf("x %f (%+d), y %f (%+d), buttons 0x%02X wheel %d\n", io.MousePos.x, dx, io.MousePos.y, dy, buttons, wheel);
+  static uint8_t mousebuttons = 0;
+  if(mousebuttons != buttons || wheel != 0)
+  {
+    mousebuttons = buttons;
+    return true;
+  }
+  //this makes the hid process to continue gathering any pending mouse packets when the event is just movements
+  //so the UI is not updated after all packet movements are processed
+  //A more responsive UI may want to process all individual movements
+  return false;
 }
 
 #ifdef USE_CIMGUI
