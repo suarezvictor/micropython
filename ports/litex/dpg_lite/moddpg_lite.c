@@ -82,6 +82,24 @@ STATIC mp_obj_t text(mp_obj_t arg) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(text_obj, text);
 
+STATIC mp_obj_t input_text(mp_obj_t label, mp_obj_t value, mp_obj_t buffer_length) {
+  GET_STR_DATA_LEN(label, s_label, label_len);
+  GET_STR_DATA_LEN(value, s_value, value_len);
+  char buf[256];
+  mp_int_t blen = mp_obj_get_int(buffer_length);
+  if(blen < sizeof(buf))
+    blen = sizeof(buf);
+  if(blen < value_len)
+    value_len = blen;
+  memcpy(buf, s_value, value_len);
+  bool changed = igInputText(s_label, buf, blen, 0, NULL, NULL);
+  return mp_obj_new_tuple(2, ((mp_obj_t []) {
+        changed ? mp_const_true : mp_const_false,
+        mp_obj_new_str(buf, strlen(buf)),
+     }));
+}
+MP_DEFINE_CONST_FUN_OBJ_3(input_text_obj, input_text);
+
 #else //!USE_CIMGUI
 
 STATIC mp_obj_t add_text(mp_obj_t arg) {
@@ -113,12 +131,14 @@ STATIC const mp_rom_map_elem_t dpg_lite_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_end_frame), MP_ROM_PTR(&end_frame_obj) },
     { MP_ROM_QSTR(MP_QSTR_on_mouse), MP_ROM_PTR(&on_mouse_obj) },
     { MP_ROM_QSTR(MP_QSTR_on_keyboard), MP_ROM_PTR(&on_keyboard_obj) },
+    { MP_ROM_QSTR(MP_QSTR_HID_PROTO_NONE), MP_ROM_INT(USB_HID_PROTO_NONE) },
     { MP_ROM_QSTR(MP_QSTR_HID_PROTO_MOUSE), MP_ROM_INT(USB_HID_PROTO_MOUSE) },
     { MP_ROM_QSTR(MP_QSTR_HID_PROTO_KEYBOARD), MP_ROM_INT(USB_HID_PROTO_KEYBOARD) },
 #ifdef USE_CIMGUI
-    { MP_ROM_QSTR(MP_QSTR_text), MP_ROM_PTR(&text_obj) },
     { MP_ROM_QSTR(MP_QSTR_begin), MP_ROM_PTR(&begin_obj) },
     { MP_ROM_QSTR(MP_QSTR_end), MP_ROM_PTR(&end_obj) },
+    { MP_ROM_QSTR(MP_QSTR_text), MP_ROM_PTR(&text_obj) },
+    { MP_ROM_QSTR(MP_QSTR_input_text), MP_ROM_PTR(&input_text_obj) },
 #else
     { MP_ROM_QSTR(MP_QSTR_add_text), MP_ROM_PTR(&add_text_obj) },
 #endif

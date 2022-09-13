@@ -11,6 +11,7 @@ extern "C" {
 
 #include "imgui.h"
 #include "imgui_sw.h"
+#define USBHOST_USE_IMGUI
 #include "usbhost/usb_keys.h"
 
 /*
@@ -62,10 +63,8 @@ extern "C" void dpg_lite_init(void)
     IMGUI_CHECKVERSION();
     ImGui::SetAllocatorFunctions(custom_malloc, custom_free, nullptr);
     ImGui::CreateContext();
-/*
+
     ImGuiIO& io = ImGui::GetIO();
-    //io.MouseDrawCursor = true; //makes things hang up
-    //io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;   // We can honor GetMouseCursor() values (optional)
     for(uint8_t key = 0; key < HID_KEY_MAX; ++key)
     {
       ImGuiKey imkey = scan2imguikey(key);
@@ -75,7 +74,7 @@ extern "C" void dpg_lite_init(void)
         io.KeyMap[imkey] = key; //setup keymap
       }
     }
-*/
+
     imgui_sw::bind_imgui_painting();
     imgui_sw::make_style_fast();
 
