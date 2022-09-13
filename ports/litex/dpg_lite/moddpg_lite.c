@@ -86,12 +86,10 @@ STATIC mp_obj_t input_text(mp_obj_t label, mp_obj_t value, mp_obj_t buffer_lengt
   GET_STR_DATA_LEN(label, s_label, label_len);
   GET_STR_DATA_LEN(value, s_value, value_len);
   char buf[256];
+  strncpy(buf, s_value, sizeof(buf));
   mp_int_t blen = mp_obj_get_int(buffer_length);
-  if(blen < sizeof(buf))
+  if(blen > sizeof(buf))
     blen = sizeof(buf);
-  if(blen < value_len)
-    value_len = blen;
-  memcpy(buf, s_value, value_len);
   bool changed = igInputText(s_label, buf, blen, 0, NULL, NULL);
   return mp_obj_new_tuple(2, ((mp_obj_t []) {
         changed ? mp_const_true : mp_const_false,
