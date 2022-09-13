@@ -11,6 +11,8 @@ extern "C" {
 
 #include "imgui.h"
 #include "imgui_sw.h"
+#include "usbhost/usb_keys.h"
+
 /*
 static void *custom_malloc(size_t size, void* user_data)
 {
@@ -136,6 +138,25 @@ extern "C" void dpg_render(void)
     fb_clear();
 }
 
+extern "C" int dpg_hidevent_keyboard(uint8_t modifiers, uint8_t key, int pressed, char inputchar)
+{
+  ImGuiIO& io = ImGui::GetIO();
+
+  if(key != HID_KEY_NOKEY)
+  {
+    if(inputchar && pressed)
+      io.AddInputCharacter(inputchar);
+    io.KeysDown[key] = pressed;
+  }
+
+  io.KeyShift = 0 != (modifiers & (HID_LSHIFT_MASK | HID_RSHIFT_MASK));
+  io.KeyCtrl  = 0 != (modifiers & (HID_LCTRL_MASK | HID_RCTRL_MASK));
+  io.KeyAlt   = 0 != (modifiers & (HID_LALT_MASK | HID_RALT_MASK));
+  io.KeySuper = 0 != (modifiers & (HID_LSUPER_MASK | HID_RSUPER_MASK));
+
+  //printf("[UI] KEY %s event, key 0x%02x, char '%c', modifiers 0x%02x\n", pressed ? "PRESSED":"RELEASED", key, inputchar, modifiers);
+  return true;
+}
 
 extern "C" int dpg_hidevent_mouse(int dx, int dy, int buttons, int wheel)
 {
@@ -148,7 +169,7 @@ extern "C" int dpg_hidevent_mouse(int dx, int dy, int buttons, int wheel)
   if(io.MousePos.x > FB_WIDTH-1) io.MousePos.x = FB_WIDTH-1;
   io.MousePos.y += dy;
   if(io.MousePos.y < 0) io.MousePos.y = 0;
-  if(io.MousePos.y > FB_WIDTH-1) io.MousePos.y = FB_HEIGHT-1;
+  if(io.MousePos.y > FB_HEIGHT-1) io.MousePos.y = FB_HEIGHT-1;
 
   io.MouseWheel = wheel; //wheel delta
   for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); i++)

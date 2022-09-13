@@ -50,6 +50,9 @@ typedef struct _litex_usbhmi_type_t {
     mp_obj_base_t base;
     int pins[4];
     int mousex, mousey, dx, dy, buttons, wheel;
+    uint8_t key_modifiers, key;
+    int key_pressed;
+    char key_char;
     uint64_t t0;
 } litex_usbhmi_obj_t;
 
@@ -134,8 +137,9 @@ void usbhmi_start(litex_usbhmi_obj_t *self)
       self->t0 = micros();
 }
 
-int mousex, mousey;
-hid_event_mouse mouse_event;
+static int mousex, mousey;
+static hid_event_mouse mouse_event;
+static hid_event_keyboard keyb_event;
 
 //mouse event (called by the usbh_hid_poll function)
 int usbh_on_hidevent_mouse(int dx, int dy, int buttons, int wheel)
@@ -178,6 +182,10 @@ int usbh_on_hidevent_mouse(int dx, int dy, int buttons, int wheel)
 int usbh_on_hidevent_keyboard(uint8_t modifiers, uint8_t key, int pressed, char inputchar)
 {
   printf("KEYBOARD event: %s event, key 0x%02x, char '%c', modifiers 0x%02x\n", pressed ? "PRESSED":"RELEASED", key, inputchar, modifiers);
+  keyb_event.modifier = modifiers;
+  keyb_event.key = key;
+  keyb_event.pressed = pressed;
+  keyb_event.inputchar = inputchar;
   return true;
 }
 
@@ -206,6 +214,10 @@ hid_protocol_t usbhmi_process(litex_usbhmi_obj_t *self)
 		    self->wheel = mouse_event.wheel;
 		    break;
 		case USB_HID_PROTO_KEYBOARD:
+		    self->key_modifiers = keyb_event.modifier;
+		    self->key = keyb_event.key;
+		    self->key_pressed = keyb_event.pressed;
+		    self->key_char = keyb_event.inputchar;
 			break;
 		case USB_HID_PROTO_NONE:
 			break;
@@ -258,17 +270,30 @@ MP_GETTER_INT_IMPL(litex_usbhmi, MP_OBJ_NEW_SMALL_INT, dx)
 MP_GETTER_INT_IMPL(litex_usbhmi, MP_OBJ_NEW_SMALL_INT, dy)
 MP_GETTER_INT_IMPL(litex_usbhmi, MP_OBJ_NEW_SMALL_INT, buttons)
 MP_GETTER_INT_IMPL(litex_usbhmi, MP_OBJ_NEW_SMALL_INT, wheel)
+MP_GETTER_INT_IMPL(litex_usbhmi, MP_OBJ_NEW_SMALL_INT, key_modifiers)
+MP_GETTER_INT_IMPL(litex_usbhmi, MP_OBJ_NEW_SMALL_INT, key)
+MP_GETTER_INT_IMPL(litex_usbhmi, MP_OBJ_NEW_SMALL_INT, key_pressed)
+MP_GETTER_INT_IMPL(litex_usbhmi, MP_OBJ_NEW_SMALL_INT, key_char)
+
 
 STATIC const mp_map_elem_t litex_usbhmi_locals_dict_table[] = {
 	{ MP_OBJ_NEW_QSTR(MP_QSTR_start),	(mp_obj_t) &litex_usbhmi_start_obj },
 	{ MP_OBJ_NEW_QSTR(MP_QSTR_process),		(mp_obj_t) &litex_usbhmi_process_obj },
 	//getters
-	{ MP_OBJ_NEW_QSTR(MP_QSTR_mousex),	(mp_obj_t) &litex_usbhmi_mousex_obj },
-	{ MP_OBJ_NEW_QSTR(MP_QSTR_mousey),	(mp_obj_t) &litex_usbhmi_mousey_obj },
-	{ MP_OBJ_NEW_QSTR(MP_QSTR_dx),      (mp_obj_t) &litex_usbhmi_dx_obj },
-	{ MP_OBJ_NEW_QSTR(MP_QSTR_dy),		(mp_obj_t) &litex_usbhmi_dy_obj },
-	{ MP_OBJ_NEW_QSTR(MP_QSTR_buttons),	(mp_obj_t) &litex_usbhmi_buttons_obj },
-	{ MP_OBJ_NEW_QSTR(MP_QSTR_wheel),	(mp_obj_t) &litex_usbhmi_wheel_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_mousex),			(mp_obj_t) &litex_usbhmi_mousex_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_mousey),			(mp_obj_t) &litex_usbhmi_mousey_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_dx),		   		(mp_obj_t) &litex_usbhmi_dx_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_dy),				(mp_obj_t) &litex_usbhmi_dy_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_buttons),			(mp_obj_t) &litex_usbhmi_buttons_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_wheel),			(mp_obj_t) &litex_usbhmi_wheel_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_key_modifiers),	(mp_obj_t) &litex_usbhmi_key_modifiers_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_key),				(mp_obj_t) &litex_usbhmi_key_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_key_pressed),		(mp_obj_t) &litex_usbhmi_key_pressed_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_key_char),		(mp_obj_t) &litex_usbhmi_key_char_obj },
+	//const
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_HID_PROTO_NONE),		MP_ROM_INT(USB_HID_PROTO_NONE) },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_HID_PROTO_MOUSE),		MP_ROM_INT(USB_HID_PROTO_MOUSE) },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_HID_PROTO_KEYBOARD),	MP_ROM_INT(USB_HID_PROTO_KEYBOARD) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(litex_usbhmi_locals_dict, litex_usbhmi_locals_dict_table);
