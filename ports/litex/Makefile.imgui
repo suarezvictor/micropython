@@ -122,6 +122,7 @@ SRC_C = \
 SRC_CPP = \
 	cppglue.cpp \
 	dpg_lite/dpg_lite.cpp \
+	dpg_lite/cython_imgui_core.cpp \
 
 #lib sources with no need of QSTR extraction
 SRC_LITEX = \

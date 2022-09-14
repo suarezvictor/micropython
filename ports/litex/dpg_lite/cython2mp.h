@@ -33,6 +33,8 @@ extern "C"
 #define PyErr_Occurred() false
 #define PyErr_SetString(...)
 #define Py_None mp_const_none
+#define try if(true)
+#define catch(...) else
 
 #define PyObject void //mp_obj_t is void *
 

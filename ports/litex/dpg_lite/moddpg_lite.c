@@ -6,6 +6,10 @@
 
 #define USE_CIMGUI
 
+#define EXPERIMENTAL_CYTHON
+//TODO Cython:https://github.com/cython/cython/blob/master/Cython/Compiler/Code.py#L1787
+//cython core.pyx -2 --cplus -o core.cc
+
 #include <stdio.h> //printf
 #include "usbhost/usb_host.h" //USB_HID_PROTO_MOUSE, USB_HID_PROTO_KEYBOARD
 
@@ -83,6 +87,10 @@ STATIC mp_obj_t text(mp_obj_t arg) {
 MP_DEFINE_CONST_FUN_OBJ_1(text_obj, text);
 
 STATIC mp_obj_t input_text(mp_obj_t label, mp_obj_t value, mp_obj_t buffer_length) {
+#ifdef EXPERIMENTAL_CYTHON
+  mp_obj_t __pyx_pf_4core_218input_text(mp_obj_t __pyx_self, mp_obj_t __pyx_v_label, mp_obj_t __pyx_v_value, int __pyx_v_buffer_length, int __pyx_v_flags);
+  return __pyx_pf_4core_218input_text(NULL, label, value, mp_obj_get_int(buffer_length), 0);
+#else
   GET_STR_DATA_LEN(label, s_label, label_len);
   GET_STR_DATA_LEN(value, s_value, value_len);
   char buf[256];
@@ -91,10 +99,11 @@ STATIC mp_obj_t input_text(mp_obj_t label, mp_obj_t value, mp_obj_t buffer_lengt
   if(blen > sizeof(buf))
     blen = sizeof(buf);
   bool changed = igInputText(s_label, buf, blen, 0, NULL, NULL);
-  return mp_obj_new_tuple(2, ((mp_obj_t []) {
-        changed ? mp_const_true : mp_const_false,
+  return mp_obj_new_tuple(2, (mp_obj_t []) {
+        mp_obj_new_bool(changed),
         mp_obj_new_str(buf, strlen(buf)),
-     }));
+     });
+#endif
 }
 MP_DEFINE_CONST_FUN_OBJ_3(input_text_obj, input_text);
 
