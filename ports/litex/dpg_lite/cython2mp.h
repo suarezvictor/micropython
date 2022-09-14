@@ -15,6 +15,7 @@ extern "C"
 #define CYTHON_INLINE inline
 #define __PYX_ERR(...) {}
 #define unlikely(x) (x)
+#define likely(x) (x)
 #define __Pyx_GOTREF(...)
 #define __Pyx_GIVEREF(...)
 #define __Pyx_XDECREF(...)
@@ -33,6 +34,13 @@ extern "C"
 #define __Pyx_CppExn2PyErr()
 #define PyErr_Occurred() false
 #define PyErr_SetString(...)
+#define CYTHON_FALLTHROUGH
+typedef size_t Py_ssize_t;
+#define PyDict_Size(x) mp_obj_dict_len(x)
+#define __Pyx_PyDict_GetItemStr(k, s)  mp_map_lookup((mp_map_t*)k, s, MP_MAP_LOOKUP)->value //mp_obj_dict_get(k, s) //map ok if used just to get kw args
+#define PyTypeObject void
+#define Py_buffer void
+struct __Pyx_memviewslice {};
 
 #define Py_None mp_const_none
 #define Py_True mp_const_true
@@ -42,10 +50,17 @@ extern "C"
 #define catch(...) else
 
 #define PyObject void //mp_obj_t is void *
+#define __Pyx_ArgTypeTest(...) true
+#warning implement__Pyx_ArgTypeTest
+
+#define __Pyx_RaiseArgtupleInvalid(...)
+#warning implement __Pyx_RaiseArgtupleInvalid
 
 #define __Pyx_PyBool_FromLong(x) mp_obj_new_bool(x)
 #define PyTuple_New(n) mp_obj_new_tuple(n, NULL)
 #define PyTuple_SET_ITEM(t, i, v) ((mp_obj_tuple_t *)t)->items[i]=(v)
+#define PyTuple_GET_ITEM(t, i) ((mp_obj_tuple_t *)t)->items[i]
+#define PyTuple_GET_SIZE(t) ((mp_obj_tuple_t *)t)->len
 
 static inline const char *__Pyx_PyBytes_AsString(mp_obj_t value)
 {

@@ -60,7 +60,18 @@ MP_DEFINE_CONST_FUN_OBJ_0(end_frame_obj, end_frame);
 
 
 #ifdef USE_CIMGUI
+
+#ifdef EXPERIMENTAL_CYTHON
+STATIC mp_obj_t begin(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+  mp_obj_t __pyx_pw_4core_33begin(mp_obj_t __pyx_self, mp_obj_t __pyx_args, mp_obj_t __pyx_kwds);
+  
+  return __pyx_pw_4core_33begin(NULL, mp_obj_new_tuple(n_args, pos_args), kw_args);
+}
+MP_DEFINE_CONST_FUN_OBJ_KW(begin_obj, 0, begin);
+
+#else
 STATIC mp_obj_t begin(mp_obj_t label, mp_obj_t closable) {
+
 #ifdef EXPERIMENTAL_CYTHON
   mp_obj_t __pyx_pf_4core_32begin(mp_obj_t __pyx_self, mp_obj_t __pyx_v_label, mp_obj_t __pyx_v_closable, ImGuiWindowFlags __pyx_v_flags);
   return __pyx_pf_4core_32begin(NULL, label, closable, 0);
@@ -75,6 +86,7 @@ STATIC mp_obj_t begin(mp_obj_t label, mp_obj_t closable) {
 #endif
 }
 MP_DEFINE_CONST_FUN_OBJ_2(begin_obj, begin);
+#endif
 
 STATIC mp_obj_t end() {
 #ifdef EXPERIMENTAL_CYTHON
