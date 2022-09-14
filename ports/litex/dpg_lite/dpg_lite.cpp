@@ -185,8 +185,8 @@ extern "C" int dpg_hidevent_mouse(int dx, int dy, int buttons, int wheel)
   return false;
 }
 
-#ifndef EXPERIMENTAL_CYTHON
+/*
 #include "cimgui.h"
 #include "cimgui.cpp"
-#endif
+*/
 
