@@ -4,7 +4,9 @@
 
 #define __pyx_f_4core__from_bytes(x) (x)
 #define __pyx_f_4core__bytes(x) (x)
+#define __Pyx_PyInt_As_int(x) mp_obj_get_int(x)
 #define __Pyx_PyInt_As_ImGuiWindowFlags(x) (ImGuiWindowFlags) mp_obj_get_int(x)
+#define __Pyx_PyInt_As_ImGuiInputTextFlags(x) (ImGuiInputTextFlags) mp_obj_get_int(x)
 
 static CYTHON_INLINE int __Pyx_PyObject_IsTrue(PyObject* x) {
    int is_true = x == Py_True;
@@ -1023,7 +1025,7 @@ static PyObject *__pyx_pf_4core_28show_style_selector(CYTHON_UNUSED PyObject *__
 static PyObject *__pyx_pf_4core_30show_font_selector(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label); /* proto */
 static PyObject *__pyx_pf_4core_32begin(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, PyObject *__pyx_v_closable, ImGuiWindowFlags __pyx_v_flags); /* proto */
 static PyObject *__pyx_pf_4core_34get_draw_data(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
-//static PyObject *__pyx_pf_4core_36end(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
+static PyObject *__pyx_pf_4core_36end(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
 static PyObject *__pyx_pf_4core_38begin_child(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_signatures, PyObject *__pyx_v_args, PyObject *__pyx_v_kwargs, CYTHON_UNUSED PyObject *__pyx_v_defaults); /* proto */
 static PyObject *__pyx_pf_4core_507__defaults__(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
 static PyObject *__pyx_pf_4core_497begin_child(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, float __pyx_v_width, float __pyx_v_height, bool __pyx_v_border, ImGuiWindowFlags __pyx_v_flags); /* proto */
@@ -1089,7 +1091,7 @@ static PyObject *__pyx_pf_4core_152begin_popup_context_item(CYTHON_UNUSED PyObje
 static PyObject *__pyx_pf_4core_154begin_popup_context_window(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, bool __pyx_v_also_over_items, int __pyx_v_mouse_button); /* proto */
 static PyObject *__pyx_pf_4core_156end_popup(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
 static PyObject *__pyx_pf_4core_158close_current_popup(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
-//static PyObject *__pyx_pf_4core_160text(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text); /* proto */
+static PyObject *__pyx_pf_4core_160text(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text); /* proto */
 static PyObject *__pyx_pf_4core_162text_colored(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text, float __pyx_v_r, float __pyx_v_g, float __pyx_v_b, float __pyx_v_a); /* proto */
 static PyObject *__pyx_pf_4core_164text_disabled(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text); /* proto */
 static PyObject *__pyx_pf_4core_166text_wrapped(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text); /* proto */
@@ -1118,7 +1120,7 @@ static PyObject *__pyx_pf_4core_210drag_int(CYTHON_UNUSED PyObject *__pyx_self, 
 static PyObject *__pyx_pf_4core_212drag_int2(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, int __pyx_v_value0, int __pyx_v_value1, float __pyx_v_change_speed, int __pyx_v_min_value, int __pyx_v_max_value, PyObject *__pyx_v_format); /* proto */
 static PyObject *__pyx_pf_4core_214drag_int3(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, int __pyx_v_value0, int __pyx_v_value1, int __pyx_v_value2, float __pyx_v_change_speed, int __pyx_v_min_value, int __pyx_v_max_value, PyObject *__pyx_v_format); /* proto */
 static PyObject *__pyx_pf_4core_216drag_int4(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, int __pyx_v_value0, int __pyx_v_value1, int __pyx_v_value2, int __pyx_v_value3, float __pyx_v_change_speed, int __pyx_v_min_value, int __pyx_v_max_value, PyObject *__pyx_v_format); /* proto */
-//static PyObject *__pyx_pf_4core_218input_text(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, PyObject *__pyx_v_value, int __pyx_v_buffer_length, ImGuiInputTextFlags __pyx_v_flags); /* proto */
+static PyObject *__pyx_pf_4core_218input_text(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, PyObject *__pyx_v_value, int __pyx_v_buffer_length, ImGuiInputTextFlags __pyx_v_flags); /* proto */
 static PyObject *__pyx_pf_4core_220input_text_multiline(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, PyObject *__pyx_v_value, int __pyx_v_buffer_length, float __pyx_v_width, float __pyx_v_height, ImGuiInputTextFlags __pyx_v_flags); /* proto */
 static PyObject *__pyx_pf_4core_222input_float(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, float __pyx_v_value, float __pyx_v_step, float __pyx_v_step_fast, PyObject *__pyx_v_format, ImGuiInputTextFlags __pyx_v_flags); /* proto */
 static PyObject *__pyx_pf_4core_224input_float2(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, float __pyx_v_value0, float __pyx_v_value1, PyObject *__pyx_v_format, ImGuiInputTextFlags __pyx_v_flags); /* proto */
@@ -1496,7 +1498,20 @@ static PyObject *__pyx_pf_4core_32begin(CYTHON_UNUSED PyObject *__pyx_self, PyOb
   return __pyx_r;
 }
 
-extern "C" PyObject *__pyx_pf_4core_36end(CYTHON_UNUSED PyObject *__pyx_self) {
+extern "C" PyObject *__pyx_pw_4core_37end(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+//static PyMethodDef __pyx_mdef_4core_37end = {"end", (PyCFunction)__pyx_pw_4core_37end, METH_NOARGS, 0};
+PyObject *__pyx_pw_4core_37end(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("end (wrapper)", 0);
+  __pyx_r = __pyx_pf_4core_36end(__pyx_self);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_4core_36end(CYTHON_UNUSED PyObject *__pyx_self) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int __pyx_lineno = 0;
@@ -1537,7 +1552,107 @@ extern "C" PyObject *__pyx_pf_4core_36end(CYTHON_UNUSED PyObject *__pyx_self) {
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
-extern "C" PyObject *__pyx_pf_4core_218input_text(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, PyObject *__pyx_v_value, int __pyx_v_buffer_length, ImGuiInputTextFlags __pyx_v_flags) {
+
+extern "C" PyObject *__pyx_pw_4core_219input_text(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+//static PyMethodDef __pyx_mdef_4core_219input_text = {"input_text", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_4core_219input_text, METH_VARARGS|METH_KEYWORDS, 0};
+PyObject *__pyx_pw_4core_219input_text(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v_label = 0;
+  PyObject *__pyx_v_value = 0;
+  int __pyx_v_buffer_length;
+  ImGuiInputTextFlags __pyx_v_flags;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("input_text (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_label,&__pyx_n_s_value,&__pyx_n_s_buffer_length,&__pyx_n_s_flags,0};
+    PyObject* values[4] = {0,0,0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  4: values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
+        CYTHON_FALLTHROUGH;
+        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+        CYTHON_FALLTHROUGH;
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_label)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        CYTHON_FALLTHROUGH;
+        case  1:
+        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_value)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("input_text", 0, 3, 4, 1); __PYX_ERR(0, 4900, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  2:
+        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_buffer_length)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("input_text", 0, 3, 4, 2); __PYX_ERR(0, 4900, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  3:
+        if (kw_args > 0) {
+          PyObject* value = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_flags);
+          if (value) { values[3] = value; kw_args--; }
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "input_text") < 0)) __PYX_ERR(0, 4900, __pyx_L3_error)
+      }
+    } else {
+      switch (PyTuple_GET_SIZE(__pyx_args)) {
+        case  4: values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
+        CYTHON_FALLTHROUGH;
+        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+        values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+    }
+    __pyx_v_label = ((PyObject*)values[0]);
+    __pyx_v_value = ((PyObject*)values[1]);
+    __pyx_v_buffer_length = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_buffer_length == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 4903, __pyx_L3_error)
+    if (values[3]) {
+      __pyx_v_flags = __Pyx_PyInt_As_ImGuiInputTextFlags(values[3]); if (unlikely((__pyx_v_flags == ((ImGuiInputTextFlags)-1)) && PyErr_Occurred())) __PYX_ERR(0, 4904, __pyx_L3_error)
+    } else {
+      __pyx_v_flags = ((ImGuiInputTextFlags)0);
+    }
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("input_text", 0, 3, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 4900, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("core.input_text", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_label), (&PyString_Type), 1, "label", 1))) __PYX_ERR(0, 4901, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_value), (&PyString_Type), 1, "value", 1))) __PYX_ERR(0, 4902, __pyx_L1_error)
+  __pyx_r = __pyx_pf_4core_218input_text(__pyx_self, __pyx_v_label, __pyx_v_value, __pyx_v_buffer_length, __pyx_v_flags);
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_4core_218input_text(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, PyObject *__pyx_v_value, int __pyx_v_buffer_length, ImGuiInputTextFlags __pyx_v_flags) {
   char *__pyx_v_inout_text;
   bool __pyx_v_changed;
   PyObject *__pyx_v_output = NULL;
@@ -1677,9 +1792,29 @@ extern "C" PyObject *__pyx_pf_4core_218input_text(CYTHON_UNUSED PyObject *__pyx_
   return __pyx_r;
 }
 
+extern "C" PyObject *__pyx_pw_4core_161text(PyObject *__pyx_self, PyObject *__pyx_v_text); /*proto*/
+//static PyMethodDef __pyx_mdef_4core_161text = {"text", (PyCFunction)__pyx_pw_4core_161text, METH_O, 0};
+PyObject *__pyx_pw_4core_161text(PyObject *__pyx_self, PyObject *__pyx_v_text) {
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("text (wrapper)", 0);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_text), (&PyString_Type), 1, "text", 1))) __PYX_ERR(0, 3714, __pyx_L1_error)
+  __pyx_r = __pyx_pf_4core_160text(__pyx_self, ((PyObject*)__pyx_v_text));
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
 
 
-extern "C" PyObject *__pyx_pf_4core_160text(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text) {
+static PyObject *__pyx_pf_4core_160text(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_text) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;

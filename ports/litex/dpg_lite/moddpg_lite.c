@@ -62,12 +62,38 @@ MP_DEFINE_CONST_FUN_OBJ_0(end_frame_obj, end_frame);
 #ifdef USE_CIMGUI
 
 #ifdef EXPERIMENTAL_CYTHON
+
+/*
 STATIC mp_obj_t begin(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
   mp_obj_t __pyx_pw_4core_33begin(mp_obj_t __pyx_self, mp_obj_t __pyx_args, mp_obj_t __pyx_kwds);
   
   return __pyx_pw_4core_33begin(NULL, mp_obj_new_tuple(n_args, pos_args), kw_args);
 }
-MP_DEFINE_CONST_FUN_OBJ_KW(begin_obj, 0, begin);
+*/
+
+#define CY_IMPL_W(imp, f) \
+STATIC mp_obj_t f(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) { \
+  mp_obj_t imp##f(mp_obj_t, mp_obj_t, mp_obj_t); \
+  return imp##f(NULL, mp_obj_new_tuple(n_args, pos_args), kw_args); } \
+MP_DEFINE_CONST_FUN_OBJ_KW(f##_obj, 0, f);
+
+#define CY_IMPL_0(imp, f) \
+STATIC mp_obj_t f() { \
+  mp_obj_t imp##f(mp_obj_t, mp_obj_t); \
+  return imp##f(NULL, NULL); } \
+MP_DEFINE_CONST_FUN_OBJ_0(f##_obj, f);
+
+#define CY_IMPL_1(imp, f) \
+STATIC mp_obj_t f(mp_obj_t arg) { \
+  mp_obj_t imp##f(mp_obj_t, mp_obj_t); \
+  return imp##f(NULL, arg); } \
+MP_DEFINE_CONST_FUN_OBJ_1(f##_obj, f);
+
+CY_IMPL_W(__pyx_pw_4core_33, begin)
+CY_IMPL_0(__pyx_pw_4core_37, end)
+CY_IMPL_1(__pyx_pw_4core_161, text)
+CY_IMPL_W(__pyx_pw_4core_219, input_text)
+
 
 #else
 STATIC mp_obj_t begin(mp_obj_t label, mp_obj_t closable) {
@@ -87,7 +113,7 @@ STATIC mp_obj_t begin(mp_obj_t label, mp_obj_t closable) {
 }
 MP_DEFINE_CONST_FUN_OBJ_2(begin_obj, begin);
 #endif
-
+/*
 STATIC mp_obj_t end() {
 #ifdef EXPERIMENTAL_CYTHON
   mp_obj_t __pyx_pf_4core_36end(mp_obj_t __pyx_self);
@@ -98,7 +124,8 @@ STATIC mp_obj_t end() {
 #endif
 }
 MP_DEFINE_CONST_FUN_OBJ_0(end_obj, end);
-
+*/
+/*
 STATIC mp_obj_t text(mp_obj_t arg) {
 #ifdef EXPERIMENTAL_CYTHON
   mp_obj_t __pyx_pf_4core_160text(mp_obj_t __pyx_self, mp_obj_t __pyx_v_text);
@@ -110,7 +137,8 @@ STATIC mp_obj_t text(mp_obj_t arg) {
 #endif
 }
 MP_DEFINE_CONST_FUN_OBJ_1(text_obj, text);
-
+*/
+/*
 STATIC mp_obj_t input_text(mp_obj_t label, mp_obj_t value, mp_obj_t buffer_length) {
 #ifdef EXPERIMENTAL_CYTHON
   mp_obj_t __pyx_pf_4core_218input_text(mp_obj_t __pyx_self, mp_obj_t __pyx_v_label, mp_obj_t __pyx_v_value, int __pyx_v_buffer_length, int __pyx_v_flags);
@@ -131,6 +159,7 @@ STATIC mp_obj_t input_text(mp_obj_t label, mp_obj_t value, mp_obj_t buffer_lengt
 #endif
 }
 MP_DEFINE_CONST_FUN_OBJ_3(input_text_obj, input_text);
+*/
 
 #else //!USE_CIMGUI
 
