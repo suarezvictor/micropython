@@ -23,6 +23,7 @@ def process_hmi_input():
         return
 
 s = ""
+value = 88
 while True:
   #get input & setup frame
   process_hmi_input()
@@ -32,6 +33,7 @@ while True:
   _, _ = imgui.begin("My window", False)
   imgui.text("Hello world!")
   changed, s = imgui.input_text("input", s, 20)
+  changed, value = imgui.slider_int("sl", value, 0, 100, "%d")
   imgui.end()
 
   #render frame

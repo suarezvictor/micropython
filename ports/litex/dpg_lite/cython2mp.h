@@ -57,6 +57,8 @@ struct __Pyx_memviewslice {};
 #warning implement __Pyx_RaiseArgtupleInvalid
 
 #define __Pyx_PyBool_FromLong(x) mp_obj_new_bool(x)
+#define __Pyx_PyInt_From_int(x) MP_OBJ_NEW_SMALL_INT(x)
+
 #define PyTuple_New(n) mp_obj_new_tuple(n, NULL)
 #define PyTuple_SET_ITEM(t, i, v) ((mp_obj_tuple_t *)t)->items[i]=(v)
 #define PyTuple_GET_ITEM(t, i) ((mp_obj_tuple_t *)t)->items[i]

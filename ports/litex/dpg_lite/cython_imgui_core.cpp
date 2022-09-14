@@ -1867,4 +1867,241 @@ static PyObject *__pyx_pf_4core_160text(CYTHON_UNUSED PyObject *__pyx_self, PyOb
   return __pyx_r;
 }
 
+extern "C" PyObject *__pyx_pw_4core_251slider_int(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+//static PyMethodDef __pyx_mdef_4core_251slider_int = {"slider_int", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_4core_251slider_int, METH_VARARGS|METH_KEYWORDS, 0};
+PyObject *__pyx_pw_4core_251slider_int(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v_label = 0;
+  int __pyx_v_value;
+  int __pyx_v_min_value;
+  int __pyx_v_max_value;
+  PyObject *__pyx_v_format = 0;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("slider_int (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_label,&__pyx_n_s_value,&__pyx_n_s_min_value,&__pyx_n_s_max_value,&__pyx_n_s_format,0};
+    PyObject* values[5] = {0,0,0,0,0};
+    values[4] = ((PyObject*)__pyx_kp_s_f);
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  5: values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
+        CYTHON_FALLTHROUGH;
+        case  4: values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
+        CYTHON_FALLTHROUGH;
+        case  3: values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+        CYTHON_FALLTHROUGH;
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_label)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        CYTHON_FALLTHROUGH;
+        case  1:
+        if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_value)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("slider_int", 0, 4, 5, 1); __PYX_ERR(0, 5729, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  2:
+        if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_min_value)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("slider_int", 0, 4, 5, 2); __PYX_ERR(0, 5729, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  3:
+        if (likely((values[3] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_max_value)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("slider_int", 0, 4, 5, 3); __PYX_ERR(0, 5729, __pyx_L3_error)
+        }
+        CYTHON_FALLTHROUGH;
+        case  4:
+        if (kw_args > 0) {
+          PyObject* value = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_format);
+          if (value) { values[4] = value; kw_args--; }
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "slider_int") < 0)) __PYX_ERR(0, 5729, __pyx_L3_error)
+      }
+    } else {
+      switch (PyTuple_GET_SIZE(__pyx_args)) {
+        case  5: values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
+        CYTHON_FALLTHROUGH;
+        case  4: values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
+        values[2] = PyTuple_GET_ITEM(__pyx_args, 2);
+        values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+    }
+    __pyx_v_label = ((PyObject*)values[0]);
+    __pyx_v_value = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_value == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 5731, __pyx_L3_error)
+    __pyx_v_min_value = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_min_value == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 5732, __pyx_L3_error)
+    __pyx_v_max_value = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_max_value == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 5733, __pyx_L3_error)
+    __pyx_v_format = ((PyObject*)values[4]);
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("slider_int", 0, 4, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 5729, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("core.slider_int", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_label), (&PyString_Type), 1, "label", 1))) __PYX_ERR(0, 5730, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_format), (&PyString_Type), 1, "format", 1))) __PYX_ERR(0, 5734, __pyx_L1_error)
+  __pyx_r = __pyx_pf_4core_250slider_int(__pyx_self, __pyx_v_label, __pyx_v_value, __pyx_v_min_value, __pyx_v_max_value, __pyx_v_format);
+
+  /* function exit code */
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_4core_250slider_int(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_label, int __pyx_v_value, int __pyx_v_min_value, int __pyx_v_max_value, PyObject *__pyx_v_format) {
+  int __pyx_v_inout_value;
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  char const *__pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
+  char const *__pyx_t_4;
+  bool __pyx_t_5;
+  PyObject *__pyx_t_6 = NULL;
+  int __pyx_lineno = 0;
+  const char *__pyx_filename = NULL;
+  int __pyx_clineno = 0;
+  __Pyx_RefNannySetupContext("slider_int", 0);
+
+  /* "core.pyx":5776
+ *         )
+ *     """
+ *     cdef int inout_value = value             # <<<<<<<<<<<<<<
+ *     return cimgui.SliderInt(
+ *         _bytes(label), <int*>&inout_value,
+ */
+  __pyx_v_inout_value = __pyx_v_value;
+
+  /* "core.pyx":5777
+ *     """
+ *     cdef int inout_value = value
+ *     return cimgui.SliderInt(             # <<<<<<<<<<<<<<
+ *         _bytes(label), <int*>&inout_value,
+ *         min_value, max_value, _bytes(format)
+ */
+  __Pyx_XDECREF(__pyx_r);
+
+  /* "core.pyx":5778
+ *     cdef int inout_value = value
+ *     return cimgui.SliderInt(
+ *         _bytes(label), <int*>&inout_value,             # <<<<<<<<<<<<<<
+ *         min_value, max_value, _bytes(format)
+ *     ), inout_value
+ */
+  __pyx_t_1 = __pyx_f_4core__bytes(__pyx_v_label); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 5778, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (unlikely(__pyx_t_1 == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "expected bytes, NoneType found");
+    __PYX_ERR(0, 5778, __pyx_L1_error)
+  }
+  __pyx_t_2 = __Pyx_PyBytes_AsString(__pyx_t_1); if (unlikely((!__pyx_t_2) && PyErr_Occurred())) __PYX_ERR(0, 5778, __pyx_L1_error)
+
+  /* "core.pyx":5779
+ *     return cimgui.SliderInt(
+ *         _bytes(label), <int*>&inout_value,
+ *         min_value, max_value, _bytes(format)             # <<<<<<<<<<<<<<
+ *     ), inout_value
+ * 
+ */
+  __pyx_t_3 = __pyx_f_4core__bytes(__pyx_v_format); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 5779, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (unlikely(__pyx_t_3 == Py_None)) {
+    PyErr_SetString(PyExc_TypeError, "expected bytes, NoneType found");
+    __PYX_ERR(0, 5779, __pyx_L1_error)
+  }
+  __pyx_t_4 = __Pyx_PyBytes_AsString(__pyx_t_3); if (unlikely((!__pyx_t_4) && PyErr_Occurred())) __PYX_ERR(0, 5779, __pyx_L1_error)
+
+  /* "core.pyx":5777
+ *     """
+ *     cdef int inout_value = value
+ *     return cimgui.SliderInt(             # <<<<<<<<<<<<<<
+ *         _bytes(label), <int*>&inout_value,
+ *         min_value, max_value, _bytes(format)
+ */
+  try {
+    __pyx_t_5 = ImGui::SliderInt(__pyx_t_2, ((int *)(&__pyx_v_inout_value)), __pyx_v_min_value, __pyx_v_max_value, __pyx_t_4);
+  } catch(...) {
+    __Pyx_CppExn2PyErr();
+    __PYX_ERR(0, 5777, __pyx_L1_error)
+  }
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyBool_FromLong(__pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 5777, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+
+  /* "core.pyx":5780
+ *         _bytes(label), <int*>&inout_value,
+ *         min_value, max_value, _bytes(format)
+ *     ), inout_value             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_inout_value); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 5780, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+
+  /* "core.pyx":5777
+ *     """
+ *     cdef int inout_value = value
+ *     return cimgui.SliderInt(             # <<<<<<<<<<<<<<
+ *         _bytes(label), <int*>&inout_value,
+ *         min_value, max_value, _bytes(format)
+ */
+  __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 5777, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_GIVEREF(__pyx_t_3);
+  PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_1);
+  PyTuple_SET_ITEM(__pyx_t_6, 1, __pyx_t_1);
+  __pyx_t_3 = 0;
+  __pyx_t_1 = 0;
+  __pyx_r = __pyx_t_6;
+  __pyx_t_6 = 0;
+  goto __pyx_L0;
+
+  /* "core.pyx":5729
+ * 
+ * 
+ * def slider_int(             # <<<<<<<<<<<<<<
+ *     str label,
+ *     int value,
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_XDECREF(__pyx_t_3);
+  __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_AddTraceback("core.slider_int", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
 
