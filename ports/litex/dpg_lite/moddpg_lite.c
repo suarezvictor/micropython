@@ -74,10 +74,10 @@ STATIC mp_obj_t f(mp_obj_t arg) { \
   return imp##f(NULL, arg); } \
 MP_DEFINE_CONST_FUN_OBJ_1(f##_obj, f);
 
-CY_IMPL_KW(__pyx_pw_4core_33, begin)
-CY_IMPL_0(__pyx_pw_4core_37, end)
-CY_IMPL_1(__pyx_pw_4core_161, text)
-CY_IMPL_KW(__pyx_pw_4core_219, input_text)
+#include "pyimgui_def.inl"
+#undef CY_IMPL_KW
+#undef CY_IMPL_0
+#undef CY_IMPL_1
 
 STATIC const mp_rom_map_elem_t dpg_lite_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_dpg_lite) },
@@ -91,10 +91,10 @@ STATIC const mp_rom_map_elem_t dpg_lite_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_HID_PROTO_MOUSE), MP_ROM_INT(USB_HID_PROTO_MOUSE) },
     { MP_ROM_QSTR(MP_QSTR_HID_PROTO_KEYBOARD), MP_ROM_INT(USB_HID_PROTO_KEYBOARD) },
 
-    { MP_ROM_QSTR(MP_QSTR_begin), MP_ROM_PTR(&begin_obj) },
-    { MP_ROM_QSTR(MP_QSTR_end), MP_ROM_PTR(&end_obj) },
-    { MP_ROM_QSTR(MP_QSTR_text), MP_ROM_PTR(&text_obj) },
-    { MP_ROM_QSTR(MP_QSTR_input_text), MP_ROM_PTR(&input_text_obj) },
+#define CY_IMPL_KW(imp, f) { MP_ROM_QSTR(MP_QSTR_##f), MP_ROM_PTR(&f##_obj) },
+#define CY_IMPL_0(imp, f) CY_IMPL_KW(imp, f)
+#define CY_IMPL_1(imp, f) CY_IMPL_KW(imp, f)
+#include  "pyimgui_def.inl"
 };
 
 STATIC MP_DEFINE_CONST_DICT(dpg_lite_module_globals, dpg_lite_module_globals_table);
