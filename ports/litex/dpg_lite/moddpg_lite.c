@@ -24,6 +24,9 @@ int dpg_hidevent_keyboard(uint8_t modifiers, uint8_t key, int pressed, char inpu
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include "cimgui.h"
 #endif
+#ifndef EXPERIMENTAL_CYTHON
+#include <string.h>
+#endif
 
 STATIC mp_obj_t create_context() {
 	dpg_create_context();
@@ -60,11 +63,15 @@ MP_DEFINE_CONST_FUN_OBJ_0(end_frame_obj, end_frame);
 STATIC mp_obj_t begin(mp_obj_t label, mp_obj_t closable) {
 #ifdef EXPERIMENTAL_CYTHON
   mp_obj_t __pyx_pf_4core_32begin(mp_obj_t __pyx_self, mp_obj_t __pyx_v_label, mp_obj_t __pyx_v_closable, ImGuiWindowFlags __pyx_v_flags);
-  return __pyx_pf_4core_32begin(NULL, label, closable, 0); //TODO: review why returns (True, True)
+  return __pyx_pf_4core_32begin(NULL, label, closable, 0);
 #else
-    GET_STR_DATA_LEN(name, s, len);
-    igBegin(s, NULL, 0);
-    return mp_const_none;
+    GET_STR_DATA_LEN(label, s, len);
+    bool opened = true;
+    bool r = igBegin((const char*)s, mp_obj_is_true(closable) ? &opened : NULL, 0);
+  return mp_obj_new_tuple(2, (mp_obj_t []) {
+        mp_obj_new_bool(r),
+        mp_obj_new_bool(opened),
+     });
 #endif
 }
 MP_DEFINE_CONST_FUN_OBJ_2(begin_obj, begin);
@@ -86,7 +93,7 @@ STATIC mp_obj_t text(mp_obj_t arg) {
   return __pyx_pf_4core_160text(NULL, arg);
 #else
     GET_STR_DATA_LEN(arg, s, len);
-    igTextUnformatted(s, s+len);
+    igTextUnformatted((const char*)s, (const char*)s+len);
     return mp_const_none;
 #endif
 }
@@ -100,11 +107,11 @@ STATIC mp_obj_t input_text(mp_obj_t label, mp_obj_t value, mp_obj_t buffer_lengt
   GET_STR_DATA_LEN(label, s_label, label_len);
   GET_STR_DATA_LEN(value, s_value, value_len);
   char buf[256];
-  strncpy(buf, s_value, sizeof(buf));
+  strncpy(buf, (const char*)s_value, sizeof(buf));
   mp_int_t blen = mp_obj_get_int(buffer_length);
   if(blen > sizeof(buf))
     blen = sizeof(buf);
-  bool changed = igInputText(s_label, buf, blen, 0, NULL, NULL);
+  bool changed = igInputText((const char*)s_label, buf, blen, 0, NULL, NULL);
   return mp_obj_new_tuple(2, (mp_obj_t []) {
         mp_obj_new_bool(changed),
         mp_obj_new_str(buf, strlen(buf)),

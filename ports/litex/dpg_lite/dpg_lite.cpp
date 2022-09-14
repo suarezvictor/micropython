@@ -1,7 +1,5 @@
 // Copyright (C) 2021-2022 Victor Suarez Rovere <suarezvictor@gmail.com>
 // License: BSD-2-Clause
-#define USE_CIMGUI
-
 #include <cstdio>
 
 extern "C" {
@@ -187,7 +185,7 @@ extern "C" int dpg_hidevent_mouse(int dx, int dy, int buttons, int wheel)
   return false;
 }
 
-#ifdef USE_CIMGUI
+#ifndef EXPERIMENTAL_CYTHON
 #include "cimgui.h"
 #include "cimgui.cpp"
 #endif

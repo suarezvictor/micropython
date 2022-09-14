@@ -29,7 +29,7 @@ while True:
   imgui.new_frame()
 
   #custom UI
-  imgui.begin("My window", True)
+  _, _ = imgui.begin("My window", False)
   imgui.text("Hello world!")
   changed, s = imgui.input_text("input", s, 20)
   imgui.end()
