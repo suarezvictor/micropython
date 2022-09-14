@@ -8,7 +8,6 @@
 
 #define EXPERIMENTAL_CYTHON
 //TODO Cython:https://github.com/cython/cython/blob/master/Cython/Compiler/Code.py#L1787
-//cython core.pyx -2 --cplus -o core.cc
 
 #include <stdio.h> //printf
 #include "usbhost/usb_host.h" //USB_HID_PROTO_MOUSE, USB_HID_PROTO_KEYBOARD
@@ -58,31 +57,38 @@ MP_DEFINE_CONST_FUN_OBJ_0(end_frame_obj, end_frame);
 
 
 #ifdef USE_CIMGUI
-STATIC mp_obj_t begin(mp_obj_t name, mp_obj_t p_open) {
+STATIC mp_obj_t begin(mp_obj_t label, mp_obj_t closable) {
+#ifdef EXPERIMENTAL_CYTHON
+  mp_obj_t __pyx_pf_4core_32begin(mp_obj_t __pyx_self, mp_obj_t __pyx_v_label, mp_obj_t __pyx_v_closable, ImGuiWindowFlags __pyx_v_flags);
+  return __pyx_pf_4core_32begin(NULL, label, closable, 0); //TODO: review why returns (True, True)
+#else
     GET_STR_DATA_LEN(name, s, len);
     igBegin(s, NULL, 0);
     return mp_const_none;
+#endif
 }
 MP_DEFINE_CONST_FUN_OBJ_2(begin_obj, begin);
 
 STATIC mp_obj_t end() {
+#ifdef EXPERIMENTAL_CYTHON
+  mp_obj_t __pyx_pf_4core_36end(mp_obj_t __pyx_self);
+  return __pyx_pf_4core_36end(NULL);
+#else
 	igEnd();
     return mp_const_none;
+#endif
 }
 MP_DEFINE_CONST_FUN_OBJ_0(end_obj, end);
 
 STATIC mp_obj_t text(mp_obj_t arg) {
-
+#ifdef EXPERIMENTAL_CYTHON
+  mp_obj_t __pyx_pf_4core_160text(mp_obj_t __pyx_self, mp_obj_t __pyx_v_text);
+  return __pyx_pf_4core_160text(NULL, arg);
+#else
     GET_STR_DATA_LEN(arg, s, len);
-    /*
-    printf("text: %.*s\n", len, s);
-    static int color_r = 128;
-    igSliderInt("R", &color_r, 0, 255, "%d", 0);
-    color_r = (--color_r)  & 0xFF;
-    */
     igTextUnformatted(s, s+len);
-
     return mp_const_none;
+#endif
 }
 MP_DEFINE_CONST_FUN_OBJ_1(text_obj, text);
 
