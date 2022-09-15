@@ -9,7 +9,13 @@ extern "C"
 
 #define malloc(x) gc_alloc(x, false)
 #define free(x) gc_free(x)
-
+typedef void(*PyCFunction)(...);
+typedef PyCFunction PyCFunctionWithKeywords;
+typedef struct PyMethodDef { const char *name; PyCFunction f; int flags, dummy; };
+#define METH_NOARGS 1
+#define METH_VARARGS 2
+#define METH_KEYWORDS 4
+#define METH_O 8
 
 #define CYTHON_UNUSED
 #define CYTHON_INLINE inline

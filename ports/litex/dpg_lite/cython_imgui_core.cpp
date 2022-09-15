@@ -1319,9 +1319,9 @@ static PyObject *__pyx_tp_new_Enum(PyTypeObject *t, PyObject *a, PyObject *k); /
 static PyObject *__pyx_tp_new_memoryview(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new__memoryviewslice(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 
-
-//static PyMethodDef __pyx_mdef_4core_33begin = {"begin", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_4core_33begin, METH_VARARGS|METH_KEYWORDS, 0};
-extern "C" PyObject *__pyx_pw_4core_33begin(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_4core_33begin(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_4core_33begin = {"begin", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_4core_33begin, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_4core_33begin(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_label = 0;
   PyObject *__pyx_v_closable = 0;
   ImGuiWindowFlags __pyx_v_flags;
@@ -1498,9 +1498,9 @@ static PyObject *__pyx_pf_4core_32begin(CYTHON_UNUSED PyObject *__pyx_self, PyOb
   return __pyx_r;
 }
 
-extern "C" PyObject *__pyx_pw_4core_37end(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-//static PyMethodDef __pyx_mdef_4core_37end = {"end", (PyCFunction)__pyx_pw_4core_37end, METH_NOARGS, 0};
-PyObject *__pyx_pw_4core_37end(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_4core_37end(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused); /*proto*/
+static PyMethodDef __pyx_mdef_4core_37end = {"end", (PyCFunction)__pyx_pw_4core_37end, METH_NOARGS, 0};
+static PyObject *__pyx_pw_4core_37end(PyObject *__pyx_self, CYTHON_UNUSED PyObject *unused) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("end (wrapper)", 0);
@@ -1553,9 +1553,10 @@ static PyObject *__pyx_pf_4core_36end(CYTHON_UNUSED PyObject *__pyx_self) {
   return __pyx_r;
 }
 
-extern "C" PyObject *__pyx_pw_4core_219input_text(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-//static PyMethodDef __pyx_mdef_4core_219input_text = {"input_text", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_4core_219input_text, METH_VARARGS|METH_KEYWORDS, 0};
-PyObject *__pyx_pw_4core_219input_text(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+
+static PyObject *__pyx_pw_4core_219input_text(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_4core_219input_text = {"input_text", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_4core_219input_text, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_4core_219input_text(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_label = 0;
   PyObject *__pyx_v_value = 0;
   int __pyx_v_buffer_length;
@@ -1792,9 +1793,9 @@ static PyObject *__pyx_pf_4core_218input_text(CYTHON_UNUSED PyObject *__pyx_self
   return __pyx_r;
 }
 
-extern "C" PyObject *__pyx_pw_4core_161text(PyObject *__pyx_self, PyObject *__pyx_v_text); /*proto*/
-//static PyMethodDef __pyx_mdef_4core_161text = {"text", (PyCFunction)__pyx_pw_4core_161text, METH_O, 0};
-PyObject *__pyx_pw_4core_161text(PyObject *__pyx_self, PyObject *__pyx_v_text) {
+static PyObject *__pyx_pw_4core_161text(PyObject *__pyx_self, PyObject *__pyx_v_text); /*proto*/
+static PyMethodDef __pyx_mdef_4core_161text = {"text", (PyCFunction)__pyx_pw_4core_161text, METH_O, 0};
+static PyObject *__pyx_pw_4core_161text(PyObject *__pyx_self, PyObject *__pyx_v_text) {
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -1867,9 +1868,9 @@ static PyObject *__pyx_pf_4core_160text(CYTHON_UNUSED PyObject *__pyx_self, PyOb
   return __pyx_r;
 }
 
-extern "C" PyObject *__pyx_pw_4core_251slider_int(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-//static PyMethodDef __pyx_mdef_4core_251slider_int = {"slider_int", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_4core_251slider_int, METH_VARARGS|METH_KEYWORDS, 0};
-PyObject *__pyx_pw_4core_251slider_int(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+static PyObject *__pyx_pw_4core_251slider_int(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_4core_251slider_int = {"slider_int", (PyCFunction)(void*)(PyCFunctionWithKeywords)__pyx_pw_4core_251slider_int, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_4core_251slider_int(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_label = 0;
   int __pyx_v_value;
   int __pyx_v_min_value;
