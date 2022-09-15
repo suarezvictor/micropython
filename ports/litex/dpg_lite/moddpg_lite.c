@@ -56,28 +56,10 @@ STATIC mp_obj_t on_keyboard(mp_obj_t modifiers, mp_obj_t key, mp_obj_t pressed/*
 }
 MP_DEFINE_CONST_FUN_OBJ_3(on_keyboard_obj, on_keyboard);
 
-#define CY_IMPL_KW(imp, f) \
-STATIC mp_obj_t f(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) { \
-  mp_obj_t imp##f(mp_obj_t, mp_obj_t, mp_obj_t); \
-  return imp##f(NULL, mp_obj_new_tuple(n_args, pos_args), kw_args); } \
-MP_DEFINE_CONST_FUN_OBJ_KW(f##_obj, 0, f);
-
-#define CY_IMPL_0(imp, f) \
-STATIC mp_obj_t f() { \
-  mp_obj_t imp##f(mp_obj_t, mp_obj_t); \
-  return imp##f(NULL, NULL); } \
-MP_DEFINE_CONST_FUN_OBJ_0(f##_obj, f);
-
-#define CY_IMPL_1(imp, f) \
-STATIC mp_obj_t f(mp_obj_t arg) { \
-  mp_obj_t imp##f(mp_obj_t, mp_obj_t); \
-  return imp##f(NULL, arg); } \
-MP_DEFINE_CONST_FUN_OBJ_1(f##_obj, f);
-
-#include "pyimgui_def.inl"
-#undef CY_IMPL_KW
-#undef CY_IMPL_0
-#undef CY_IMPL_1
+#define CY_IMPL_KW(imp, f) MP_DECLARE_CONST_FUN_OBJ_KW(f##_obj);
+#define CY_IMPL_0(imp, f) MP_DECLARE_CONST_FUN_OBJ_0(f##_obj);
+#define CY_IMPL_1(imp, f) MP_DECLARE_CONST_FUN_OBJ_1(f##_obj);
+#include  "pyimgui_def.inl"
 
 STATIC const mp_rom_map_elem_t dpg_lite_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_dpg_lite) },

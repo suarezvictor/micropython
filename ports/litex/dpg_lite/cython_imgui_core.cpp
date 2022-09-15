@@ -2105,3 +2105,32 @@ static PyObject *__pyx_pf_4core_250slider_int(CYTHON_UNUSED PyObject *__pyx_self
   return __pyx_r;
 }
 
+
+
+
+#define CY_IMPL_KW(imp, f) \
+STATIC mp_obj_t f(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) { \
+  mp_obj_t imp##f(mp_obj_t, mp_obj_t, mp_obj_t); \
+  return imp##f(NULL, mp_obj_new_tuple(n_args, pos_args), kw_args); } \
+  mp_obj_fun_builtin_var_t f##_obj = {{&mp_type_fun_builtin_var}, MP_OBJ_FUN_MAKE_SIG(0, MP_OBJ_FUN_ARGS_MAX, true), (mp_fun_var_t) f};
+
+#define CY_IMPL_0(imp, f) \
+STATIC mp_obj_t f() { \
+  mp_obj_t imp##f(mp_obj_t, mp_obj_t); \
+  return imp##f(NULL, NULL); } \
+  mp_obj_fun_builtin_fixed_t f##_obj = {{&mp_type_fun_builtin_0}, f};
+
+#define CY_IMPL_1(imp, f) \
+STATIC mp_obj_t f() { \
+  mp_obj_t imp##f(mp_obj_t, mp_obj_t); \
+  return imp##f(NULL, NULL); } \
+  mp_obj_fun_builtin_fixed_t f##_obj = {{&mp_type_fun_builtin_1}, f};
+
+
+extern "C"
+{
+#include "py/obj.h"
+#include "py/objstr.h"
+#include "pyimgui_def.inl"
+}
+
