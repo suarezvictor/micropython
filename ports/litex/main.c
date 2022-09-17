@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     irq_setmask(0);
     irq_setie(1);
     uart_init();
-
+#warning argc, char **argv is garbage
     start_micropython(argc, argv);
 
     irq_setie(0);
