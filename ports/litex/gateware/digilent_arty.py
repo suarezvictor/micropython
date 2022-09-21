@@ -9,6 +9,20 @@
 # Copyright (c) 2020 Zephyr on LiteX VexRiscv Developers
 # SPDX-License-Identifier: BSD-2-Clause
 
+DVI = True
+if DVI:
+  pmod_i2s  = "pmoda"
+  pmod_sd   = "pmodb"
+  pmod_dvi  = "pmodc"
+  pmod_usb  = "pmodd"
+else:
+  pmod_i2s  = "pmoda"
+  pmod_sd   = None
+  pmod_vga1 = "pmodb"
+  pmod_vga2 = "pmodc"
+  pmod_usb  = "pmodd"
+
+
 import os
 import argparse
 
@@ -37,7 +51,6 @@ from litespi.opcodes import SpiNorFlashOpCodes as Codes
 from litespi.phy.generic import LiteSPIPHY
 from litespi import LiteSPI
 
-DVI = False
 
 
 """
@@ -143,7 +156,7 @@ class VideoS7HDMIPHY_CUSTOM(Module):
                 clock_domain = clock_domain,
             )
             self.submodules += serializer
-            c2d   = {"r": 0, "g": 1, "b": 2}
+            c2d   = {"r": 2, "g": 1, "b": 0}
             pad_p = getattr(pads, f"data{c2d[color]}_p")
             pad_n = getattr(pads, f"data{c2d[color]}_n")
             self.specials += Instance("OBUFDS", i_I=pad_o, o_O=pad_p, o_OB=pad_n)
@@ -276,11 +289,9 @@ class BaseSoC(SoCCore):
 
         # GPIOs ------------------------------------------------------------------------------------
         if with_pmod_gpio:
-            #ext = arty.raw_pmod_io("pmoda")
-            #pa = [f"pmoda:{i:d}" for i in range(8)] #bits 0-7
-            pa = ["V15", "U16", "P14", "T11", "R12", "T14", "T15", "T16"] #bits 0-7 on Outer Digital Header
-            pd = [f"pmodd:{i:d}" for i in range(8)] #USB device on PMOD-D (bits 8-16)
-            ext = [("gpio", 0, Pins(" ".join(pa + pd)), IOStandard("LVCMOS33"))] #first 8 bits are dummy since required by software-only USB host
+            pdummy = ["V15", "U16", "P14", "T11", "R12", "T14", "T15", "T16"] #bits 0-7 on Outer Digital Header
+            pusb = [pmod_usb + f":{i:d}" for i in range(8)] #USB device (bits 8-16) on selected PMOD
+            ext = [("gpio", 0, Pins(" ".join(pdummy + pusb)), IOStandard("LVCMOS33"))] #first 8 bits are dummy since required by software-only USB host
             platform.add_extension(ext)
             self.submodules.gpio = GPIOTristate(platform.request("gpio"))
             self.add_constant("LITEX_SOFTUSB_HOST");
@@ -304,25 +315,25 @@ class BaseSoC(SoCCore):
         with_video_framebuffer = True
         if with_video_framebuffer and DVI:
             platform.add_extension([("hdmi_out", 0, #DVI pmod breakout on pmod C (seems not working in others than C)
-                Subsignal("data0_p", Pins("pmodc:0"), IOStandard("TMDS_33")),
-                Subsignal("data0_n", Pins("pmodc:1"), IOStandard("TMDS_33")),
-                Subsignal("data1_p", Pins("pmodc:2"), IOStandard("TMDS_33")),
-                Subsignal("data1_n", Pins("pmodc:3"), IOStandard("TMDS_33")),
-                Subsignal("data2_p", Pins("pmodc:4"), IOStandard("TMDS_33")),
-                Subsignal("data2_n", Pins("pmodc:5"), IOStandard("TMDS_33")),
-                Subsignal("clk_p",   Pins("pmodc:6"), IOStandard("TMDS_33")),
-                Subsignal("clk_n",   Pins("pmodc:7"), IOStandard("TMDS_33")))])
+                Subsignal("data0_p", Pins(f"{pmod_dvi}:0"), IOStandard("TMDS_33")),
+                Subsignal("data0_n", Pins(f"{pmod_dvi}:1"), IOStandard("TMDS_33")),
+                Subsignal("data1_p", Pins(f"{pmod_dvi}:2"), IOStandard("TMDS_33")),
+                Subsignal("data1_n", Pins(f"{pmod_dvi}:3"), IOStandard("TMDS_33")),
+                Subsignal("data2_p", Pins(f"{pmod_dvi}:4"), IOStandard("TMDS_33")),
+                Subsignal("data2_n", Pins(f"{pmod_dvi}:5"), IOStandard("TMDS_33")),
+                Subsignal("clk_p",   Pins(f"{pmod_dvi}:6"), IOStandard("TMDS_33")),
+                Subsignal("clk_n",   Pins(f"{pmod_dvi}:7"), IOStandard("TMDS_33")))])
             from litex.soc.cores.video import VideoS7HDMIPHY
             self.submodules.videophy = VideoS7HDMIPHY_CUSTOM(platform.request("hdmi_out"), clock_domain="hdmi")
             #self.add_video_framebuffer(phy=self.videophy, timings="640x480@60Hz", clock_domain="hdmi", format="rgb888") #FIXME: issue 1198
             self.add_video_framebuffer(phy=self.videophy, timings="800x600@60Hz", clock_domain="hdmi", format="rgb888") #FIXME: issue 1198
         elif with_video_framebuffer:
             platform.add_extension([("vga", 0, #PMOD VGA on pmod B & C
-                Subsignal("hsync", Pins("U14")), #pmodc.4
-                Subsignal("vsync", Pins("V14")), #pmodc.5
-                Subsignal("r", Pins("E15 E16 D15 C15")), #pmodb.0-3
-                Subsignal("g", Pins("U12 V12 V10 V11")), #pmodc.0-3
-                Subsignal("b", Pins("J17 J18 K15 J15")), #pmodb.4-7
+                Subsignal("hsync", Pins(f"{pmod_vga2}:4")),
+                Subsignal("vsync", Pins(f"{pmod_vga2}:5")),
+                Subsignal("r", Pins(f"{pmod_vga1}:0 {pmod_vga1}:1 {pmod_vga1}:2 {pmod_vga1}:3")),
+                Subsignal("g", Pins(f"{pmod_vga2}:0 {pmod_vga2}:1 {pmod_vga2}:2 {pmod_vga2}:3")),
+                Subsignal("b", Pins(f"{pmod_vga1}:4 {pmod_vga1}:5 {pmod_vga1}:6 {pmod_vga1}:7")),
                 IOStandard("LVCMOS33"))])
             from litex.soc.cores.video import VideoVGAPHY
             self.submodules.videophy = VideoVGAPHY(platform.request("vga"), clock_domain="vga")
@@ -357,7 +368,7 @@ class BaseSoC(SoCCore):
             
         with_i2s = True
         if with_i2s:
-            self.platform.add_extension(arty._i2s_pmod_io)
+            self.platform.add_extension(arty.i2s_pmod_io(pmod_i2s))
             self.add_mmcm({"i2s_rx" :  11.289e6,"i2s_tx" :  22.579e6 })
             self.add_i2s()    
 
@@ -429,7 +440,7 @@ class BaseSoC(SoCCore):
 
 # Build --------------------------------------------------------------------------------------------
 # (DVI=False, 640x480@60Hz) ./digilent_arty.py --timer-uptime --uart-baudrate=1000000 --with-pmod-gpio --integrated-sram-size 32768 --sys-clk-freq=200e6     --cpu-type=vexriscv --cpu-variant=full --build
-# (DVI=True,  800x600@50Hz) ./digilent_arty.py --timer-uptime --uart-baudrate=1000000 --with-pmod-gpio --integrated-sram-size 32768 --sys-clk-freq=166666666 --cpu-type=vexriscv --cpu-variant=full --build
+# (DVI=True,  800x600@50Hz) ./digilent_arty.py --timer-uptime --uart-baudrate=1000000 --with-pmod-gpio --integrated-sram-size 32768 --sys-clk-freq=166666666 --cpu-type=vexriscv --cpu-variant=full --with-spi-sdcard --build
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX SoC on Arty A7")
@@ -472,10 +483,8 @@ def main():
         with_pmod_gpio = args.with_pmod_gpio,
         **soc_core_argdict(args)
     )
-    if args.sdcard_adapter == "numato":
-        soc.platform.add_extension(arty._numato_sdcard_pmod_io)
-    else:
-        soc.platform.add_extension(arty._sdcard_pmod_io)
+    if pmod_sd:
+      soc.platform.add_extension(arty.sdcard_pmod_io(pmod_sd))
     if args.with_spi_sdcard:
         soc.add_spi_sdcard()
     if args.with_sdcard:
