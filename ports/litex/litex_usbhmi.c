@@ -181,7 +181,7 @@ int usbh_on_hidevent_mouse(int dx, int dy, int buttons, int wheel)
 
 int usbh_on_hidevent_keyboard(uint8_t modifiers, uint8_t key, int pressed, char inputchar)
 {
-  printf("KEYBOARD event: %s event, key 0x%02x, char '%c', modifiers 0x%02x\n", pressed ? "PRESSED":"RELEASED", key, inputchar, modifiers);
+  //printf("KEYBOARD event: %s event, key 0x%02x, char '%c', modifiers 0x%02x\n", pressed ? "PRESSED":"RELEASED", key, inputchar, modifiers);
   keyb_event.modifier = modifiers;
   keyb_event.key = key;
   keyb_event.pressed = pressed;
