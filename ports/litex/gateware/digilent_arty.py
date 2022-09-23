@@ -392,7 +392,7 @@ class BaseSoC(SoCCore):
                 #https://mikevine.net/hdmi-output-from-arty-fpga
                 #https://domipheus.com/blog/hdmi-over-pmod-using-the-arty-spartan-7-fpga-board/
                 #https://www.tindie.com/products/johnnywu/pmod-hdmi-expansion-board/
-            if False:
+            if dvi_iostd == "TMDS_33":
               from litex.soc.cores.video import VideoS7HDMIPHY
               self.submodules.videophy = VideoS7HDMIPHY_CUSTOM(platform.request("hdmi_out"), clock_domain="hdmi")
             else:
