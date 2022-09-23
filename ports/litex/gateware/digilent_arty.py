@@ -13,12 +13,12 @@ DVI = True
 if DVI:
   pmod_i2s  = "pmoda"
   pmod_sd   = "pmodb"
-  pmod_dvi  = "pmodc"
+  pmod_dvi  = "pmodc" #must be port C
   pmod_usb  = "pmodd"
 else:
   pmod_i2s  = "pmoda"
   pmod_sd   = None
-  pmod_vga1 = "pmodb"
+  pmod_vga1 = "pmodb" #VGA must be port B and C
   pmod_vga2 = "pmodc"
   pmod_usb  = "pmodd"
 
@@ -161,6 +161,59 @@ class VideoS7HDMIPHY_CUSTOM(Module):
             pad_n = getattr(pads, f"data{c2d[color]}_n")
             self.specials += Instance("OBUFDS", i_I=pad_o, o_O=pad_p, o_OB=pad_n)
 
+
+class VideoECPHDMI10to1Serializer(Module):
+    def __init__(self, data_i, data_o, clock_domain, cd_5x):
+        # Clock Domain Crossing.
+        self.submodules.cdc = stream.ClockDomainCrossing([("data", 10)], cd_from=clock_domain, cd_to=cd_5x)
+        self.comb += self.cdc.sink.valid.eq(1)
+        self.comb += self.cdc.sink.data.eq(data_i)
+
+        # 10:2 Gearbox.
+        self.submodules.gearbox = ClockDomainsRenamer(cd_5x)(stream.Gearbox(i_dw=10, o_dw=2, msb_first=False))
+        self.comb += self.cdc.source.connect(self.gearbox.sink)
+
+        # 2:1 Output DDR.
+        self.comb += self.gearbox.source.ready.eq(1)
+        self.specials += DDROutput(
+            clk = ClockSignal(cd_5x),
+            i1  = self.gearbox.source.data[0],
+            i2  = self.gearbox.source.data[1],
+            o   = data_o,
+        )
+
+class VideoDefaultHDMIPHY(Module):
+    def __init__(self, pads, clock_domain, cd_5x):
+        self.sink = sink = stream.Endpoint(video_data_layout)
+
+        # # #
+
+        # Always ack Sink, no backpressure.
+        self.comb += sink.ready.eq(1)
+
+        # Clocking + Pseudo Differential Signaling.
+        self.specials += DDROutput(i1=1, i2=0, o=pads.clk_p, clk=ClockSignal(clock_domain))
+
+        # Encode/Serialize Datas.
+        for color in ["r", "g", "b"]:
+
+            # TMDS Encoding.
+            encoder = ClockDomainsRenamer(clock_domain)(TMDSEncoder())
+            setattr(self.submodules, f"{color}_encoder", encoder)
+            self.comb += encoder.d.eq(getattr(sink, color))
+            self.comb += encoder.c.eq(Cat(sink.hsync, sink.vsync) if color == "r" else 0)
+            self.comb += encoder.de.eq(sink.de)
+
+            # 10:1 Serialization + Pseudo Differential Signaling.
+            #c2d   = {"r": 0, "g": 1, "b": 2}
+            c2d   = {"r": 2, "g": 1, "b": 0}
+            serializer = VideoECPHDMI10to1Serializer(
+                data_i       = encoder.out,
+                data_o       = getattr(pads, f"data{c2d[color]}_p"),
+                clock_domain = clock_domain,
+                cd_5x = cd_5x
+            )
+            setattr(self.submodules, f"{color}_serializer", serializer)
 
 # CRG ----------------------------------------------------------------------------------------------
 
@@ -315,18 +368,31 @@ class BaseSoC(SoCCore):
         with_video_framebuffer = True
         if with_video_framebuffer and DVI:
             platform.add_extension([("hdmi_out", 0, #DVI pmod breakout on pmod C (seems not working in others than C)
-                Subsignal("data0_p", Pins(f"{pmod_dvi}:0"), IOStandard("TMDS_33")),
-                Subsignal("data0_n", Pins(f"{pmod_dvi}:1"), IOStandard("TMDS_33")),
-                Subsignal("data1_p", Pins(f"{pmod_dvi}:2"), IOStandard("TMDS_33")),
-                Subsignal("data1_n", Pins(f"{pmod_dvi}:3"), IOStandard("TMDS_33")),
-                Subsignal("data2_p", Pins(f"{pmod_dvi}:4"), IOStandard("TMDS_33")),
-                Subsignal("data2_n", Pins(f"{pmod_dvi}:5"), IOStandard("TMDS_33")),
+                #AC coupled with .1uF (may work with direct wiring)
+                Subsignal("data0_p", Pins(f"{pmod_dvi}:0"), IOStandard("TMDS_33")), #B0+
+                Subsignal("data0_n", Pins(f"{pmod_dvi}:1"), IOStandard("TMDS_33")), #B0-
+                Subsignal("data1_p", Pins(f"{pmod_dvi}:2"), IOStandard("TMDS_33")), #G1+
+                Subsignal("data1_n", Pins(f"{pmod_dvi}:3"), IOStandard("TMDS_33")), #G1-
+                Subsignal("data2_p", Pins(f"{pmod_dvi}:4"), IOStandard("TMDS_33")), #R2+
+                Subsignal("data2_n", Pins(f"{pmod_dvi}:5"), IOStandard("TMDS_33")), #R2-
                 Subsignal("clk_p",   Pins(f"{pmod_dvi}:6"), IOStandard("TMDS_33")),
-                Subsignal("clk_n",   Pins(f"{pmod_dvi}:7"), IOStandard("TMDS_33")))])
-            from litex.soc.cores.video import VideoS7HDMIPHY
-            self.submodules.videophy = VideoS7HDMIPHY_CUSTOM(platform.request("hdmi_out"), clock_domain="hdmi")
-            #self.add_video_framebuffer(phy=self.videophy, timings="640x480@60Hz", clock_domain="hdmi", format="rgb888") #FIXME: issue 1198
-            self.add_video_framebuffer(phy=self.videophy, timings="800x600@60Hz", clock_domain="hdmi", format="rgb888") #FIXME: issue 1198
+                Subsignal("clk_n",   Pins(f"{pmod_dvi}:7"), IOStandard("TMDS_33")))
+                ])
+                #other possible adapters
+                #https://github.com/Wren6991/SmolDVI
+                #https://github.com/Wren6991/DVI-PMOD
+                #https://hackaday.io/project/176327-hdmi-pmod
+                #https://mikevine.net/hdmi-output-from-arty-fpga
+                #https://domipheus.com/blog/hdmi-over-pmod-using-the-arty-spartan-7-fpga-board/
+                #https://www.tindie.com/products/johnnywu/pmod-hdmi-expansion-board/
+            if True:
+              from litex.soc.cores.video import VideoS7HDMIPHY
+              self.submodules.videophy = VideoS7HDMIPHY_CUSTOM(platform.request("hdmi_out"), clock_domain="hdmi")
+            else:
+              self.submodules.videophy = VideoDefaultHDMIPHY(platform.request("hdmi_out"), clock_domain="hdmi", cd_5x="sys")
+              
+            #self.add_video_framebuffer(phy=self.videophy, timings="640x480@60Hz", clock_domain="hdmi", format="rgb888")
+            self.add_video_framebuffer(phy=self.videophy, timings="800x600@60Hz", clock_domain="hdmi", format="rgb888")
         elif with_video_framebuffer:
             platform.add_extension([("vga", 0, #PMOD VGA on pmod B & C
                 Subsignal("hsync", Pins(f"{pmod_vga2}:4")),
