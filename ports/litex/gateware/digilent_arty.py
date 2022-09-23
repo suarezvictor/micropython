@@ -13,14 +13,17 @@ DVI = True
 if DVI:
   pmod_i2s  = "pmoda"
   pmod_sd   = "pmodb"
-  pmod_dvi  = "pmodc" #must be port C
+  pmod_dvi  = "pmodc" #must be port C for TDMS_33, ports A-D on Arty has 200 ohm series protection resistors
   pmod_usb  = "pmodd"
+  dvi_iostd = "LVCMOS33" # TMDS_33 direct wiring or .1uF coupling / LVCMOS33 wire-only on Arty's PMOD-A/D since the series resistors
+  dvi_pins  = "62514073" # "62514073" for machdyne dadapter (for TMDS_33, odd-even should be next to each other, like "01234567")
+  hdmi5x    = None #global to select digital video clock (maybe shared with sysclock to save PLL resources)
 else:
   pmod_i2s  = "pmoda"
-  pmod_sd   = None
-  pmod_vga1 = "pmodb" #VGA must be port B and C
+  pmod_vga1 = "pmodb" #VGA must be port B and C, since high-speed
   pmod_vga2 = "pmodc"
   pmod_usb  = "pmodd"
+  pmod_sd   = None #disabled since not enough PMOD
 
 
 import os
@@ -162,7 +165,7 @@ class VideoS7HDMIPHY_CUSTOM(Module):
             self.specials += Instance("OBUFDS", i_I=pad_o, o_O=pad_p, o_OB=pad_n)
 
 
-class VideoECPHDMI10to1Serializer(Module):
+class VideoDefaultHDMI10to1Serializer(Module):
     def __init__(self, data_i, data_o, clock_domain, cd_5x):
         # Clock Domain Crossing.
         self.submodules.cdc = stream.ClockDomainCrossing([("data", 10)], cd_from=clock_domain, cd_to=cd_5x)
@@ -207,7 +210,7 @@ class VideoDefaultHDMIPHY(Module):
             # 10:1 Serialization + Pseudo Differential Signaling.
             #c2d   = {"r": 0, "g": 1, "b": 2}
             c2d   = {"r": 2, "g": 1, "b": 0}
-            serializer = VideoECPHDMI10to1Serializer(
+            serializer = VideoDefaultHDMI10to1Serializer(
                 data_i       = encoder.out,
                 data_o       = getattr(pads, f"data{c2d[color]}_p"),
                 clock_domain = clock_domain,
@@ -219,6 +222,7 @@ class VideoDefaultHDMIPHY(Module):
 
 class _CRG(Module):
     def __init__(self, platform, sys_clk_freq, with_rst=True):
+        global hdmi5x
         self.rst = Signal()
         self.clock_domains.cd_sys       = ClockDomain()
         self.clock_domains.cd_sys4x     = ClockDomain(reset_less=True)
@@ -250,7 +254,9 @@ class _CRG(Module):
             if int(video_clock*5) != sys_clk_freq:
               self.clock_domains.cd_hdmi5x = ClockDomain()
               pll.create_clkout(self.cd_hdmi5x, 5*video_clock, margin=1e-3)
+              hdmi5x = "hdmi5x"
             else:
+              hdmi5x = "sys"
               print(f"shared HDMI 5x clock @{sys_clk_freq/1e6}Mhz")
               #quit()
         else:
@@ -341,7 +347,7 @@ class BaseSoC(SoCCore):
                 sys_clk_freq = sys_clk_freq)
 
         # GPIOs ------------------------------------------------------------------------------------
-        if with_pmod_gpio:
+        if pmod_usb is not None and with_pmod_gpio:
             pdummy = ["V15", "U16", "P14", "T11", "R12", "T14", "T15", "T16"] #bits 0-7 on Outer Digital Header
             pusb = [pmod_usb + f":{i:d}" for i in range(8)] #USB device (bits 8-16) on selected PMOD
             ext = [("gpio", 0, Pins(" ".join(pdummy + pusb)), IOStandard("LVCMOS33"))] #first 8 bits are dummy since required by software-only USB host
@@ -368,28 +374,30 @@ class BaseSoC(SoCCore):
         with_video_framebuffer = True
         if with_video_framebuffer and DVI:
             platform.add_extension([("hdmi_out", 0, #DVI pmod breakout on pmod C (seems not working in others than C)
-                #AC coupled with .1uF (may work with direct wiring)
-                Subsignal("data0_p", Pins(f"{pmod_dvi}:0"), IOStandard("TMDS_33")), #B0+
-                Subsignal("data0_n", Pins(f"{pmod_dvi}:1"), IOStandard("TMDS_33")), #B0-
-                Subsignal("data1_p", Pins(f"{pmod_dvi}:2"), IOStandard("TMDS_33")), #G1+
-                Subsignal("data1_n", Pins(f"{pmod_dvi}:3"), IOStandard("TMDS_33")), #G1-
-                Subsignal("data2_p", Pins(f"{pmod_dvi}:4"), IOStandard("TMDS_33")), #R2+
-                Subsignal("data2_n", Pins(f"{pmod_dvi}:5"), IOStandard("TMDS_33")), #R2-
-                Subsignal("clk_p",   Pins(f"{pmod_dvi}:6"), IOStandard("TMDS_33")),
-                Subsignal("clk_n",   Pins(f"{pmod_dvi}:7"), IOStandard("TMDS_33")))
+                #Direct wiring or AC coupled (tested with .1uF)
+                Subsignal("data0_p", Pins(f"{pmod_dvi}:{dvi_pins[0]}"), IOStandard(dvi_iostd)), #B0+
+                Subsignal("data0_n", Pins(f"{pmod_dvi}:{dvi_pins[1]}"), IOStandard(dvi_iostd)), #B0-
+                Subsignal("data1_p", Pins(f"{pmod_dvi}:{dvi_pins[2]}"), IOStandard(dvi_iostd)), #G1+
+                Subsignal("data1_n", Pins(f"{pmod_dvi}:{dvi_pins[3]}"), IOStandard(dvi_iostd)), #G1-
+                Subsignal("data2_p", Pins(f"{pmod_dvi}:{dvi_pins[4]}"), IOStandard(dvi_iostd)), #R2+
+                Subsignal("data2_n", Pins(f"{pmod_dvi}:{dvi_pins[5]}"), IOStandard(dvi_iostd)), #R2-
+                Subsignal("clk_p",   Pins(f"{pmod_dvi}:{dvi_pins[6]}"), IOStandard(dvi_iostd)),
+                Subsignal("clk_n",   Pins(f"{pmod_dvi}:{dvi_pins[7]}"), IOStandard(dvi_iostd)))
                 ])
-                #other possible adapters
+                #possible adapters
+                #https://github.com/machdyne/ddmi/
                 #https://github.com/Wren6991/SmolDVI
                 #https://github.com/Wren6991/DVI-PMOD
                 #https://hackaday.io/project/176327-hdmi-pmod
                 #https://mikevine.net/hdmi-output-from-arty-fpga
                 #https://domipheus.com/blog/hdmi-over-pmod-using-the-arty-spartan-7-fpga-board/
                 #https://www.tindie.com/products/johnnywu/pmod-hdmi-expansion-board/
-            if True:
+            if False:
               from litex.soc.cores.video import VideoS7HDMIPHY
               self.submodules.videophy = VideoS7HDMIPHY_CUSTOM(platform.request("hdmi_out"), clock_domain="hdmi")
             else:
-              self.submodules.videophy = VideoDefaultHDMIPHY(platform.request("hdmi_out"), clock_domain="hdmi", cd_5x="sys")
+              #from litex.soc.cores.video import VideoHDMIPHY #works at 25MHz sys clock but with swapped colors 
+              self.submodules.videophy = VideoDefaultHDMIPHY(platform.request("hdmi_out"), clock_domain="hdmi", cd_5x=hdmi5x)
               
             #self.add_video_framebuffer(phy=self.videophy, timings="640x480@60Hz", clock_domain="hdmi", format="rgb888")
             self.add_video_framebuffer(phy=self.videophy, timings="800x600@60Hz", clock_domain="hdmi", format="rgb888")
@@ -432,7 +440,7 @@ class BaseSoC(SoCCore):
 
             self.comb += self.dma_reader.source.connect(self.dma_writer.sink) #Connect Reader to Writer
             
-        with_i2s = True
+        with_i2s = pmod_i2s is not None
         if with_i2s:
             self.platform.add_extension(arty.i2s_pmod_io(pmod_i2s))
             self.add_mmcm({"i2s_rx" :  11.289e6,"i2s_tx" :  22.579e6 })
