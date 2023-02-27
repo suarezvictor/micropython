@@ -7,6 +7,7 @@
 # Copyright (c) 2020 Sean Cross <sean@xobs.io>
 # Copyright (c) 2020 Drew Fustini <drew@pdp7.com>
 # Copyright (c) 2020 Florent Kermarrec <florent@enjoy-digital.fr>
+# Copyright (c) 2023 Victor Suarez Rovere <suarezvictor@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause
 
 from migen import *
