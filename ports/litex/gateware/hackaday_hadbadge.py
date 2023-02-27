@@ -14,46 +14,60 @@ from migen.genlib.resetsync import AsyncResetSynchronizer
 
 from litex.gen import LiteXModule
 
-from litex.build.io import DDROutput
-
 from litex_boards.platforms import hackaday_hadbadge
 
 from litex.soc.cores.clock import *
 from litex.soc.integration.soc_core import *
 from litex.soc.integration.builder import *
 
-from litedram import modules as litedram_modules
-from litedram.phy import GENSDRPHY
-from litedram.modules import AS4C32M8
+from spi_ram_dual import SpiRamDualQuad
+from litex.soc.cores.led import LedChaser
 
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(LiteXModule):
-    def __init__(self, platform, sys_clk_freq):
-        self.rst       = Signal()
-        self.cd_sys    = ClockDomain()
-        self.cd_sys_ps = ClockDomain()
+    def __init__(self, platform, sys_clk_freq, with_usb_pll=True):
+        self.rst    = Signal()
+        self.cd_sys = ClockDomain()
 
         # # #
 
         # Clk / Rst
-        clk8  = platform.request("clk8")
+        clk8 = platform.request("clk8")
+
 
         # PLL
         self.pll = pll = ECP5PLL()
         pll.pfd_freq_range = (8e6, 400e6) # Lower Min from 10MHz to 8MHz.
         self.comb += pll.reset.eq(self.rst)
         pll.register_clkin(clk8, 8e6)
-        pll.create_clkout(self.cd_sys,    sys_clk_freq)
-        pll.create_clkout(self.cd_sys_ps, sys_clk_freq, phase=90)
+        pll.create_clkout(self.cd_sys, sys_clk_freq)
 
-        # SDRAM clock
-        self.specials += DDROutput(1, 0, platform.request("sdram_clock"), ClockSignal("sys_ps"))
+        # USB PLL
+        if with_usb_pll:
+            self.cd_usb_12 = ClockDomain()
+            self.cd_usb_48 = ClockDomain()
+            usb_pll = pll
+            #self.submodules += usb_pll
+            #self.comb += usb_pll.reset.eq(~por_done)
+            usb_pll.register_clkin(clk8, 8e6)
+            usb_pll.create_clkout(self.cd_usb_48, 48e6)
+            usb_pll.create_clkout(self.cd_usb_12, 12e6)
+
+        """
+        # FPGA Reset (press usr_btn for 1 second to fallback to bootloader)
+        reset_timer = WaitTimer(int(8e6))
+        reset_timer = ClockDomainsRenamer("por")(reset_timer)
+        self.submodules += reset_timer
+        self.comb += reset_timer.wait.eq(~rst_n)
+        self.comb += platform.request("rst_n").eq(~reset_timer.done)
+        """
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
-    def __init__(self, toolchain="trellis", sys_clk_freq=int(48e6), sdram_module_cls="AS4C32M8", **kwargs):
+    def __init__(self, toolchain="trellis", sys_clk_freq=int(48e6),
+        with_led_chaser = True, **kwargs):
         platform = hackaday_hadbadge.Platform(toolchain=toolchain)
 
         # CRG --------------------------------------------------------------------------------------
@@ -62,14 +76,23 @@ class BaseSoC(SoCCore):
         # SoCCore ---------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq, ident="LiteX SoC on Hackaday Badge", **kwargs)
 
-        # SDR SDRAM --------------------------------------------------------------------------------
+        # SPI RAM ----------------------------------------------------------------------------------
         if not self.integrated_main_ram_size:
-            self.sdrphy = GENSDRPHY(platform.request("sdram"), sys_clk_freq)
-            self.add_sdram("sdram",
-                phy           = self.sdrphy,
-                module        = AS4C32M8(sys_clk_freq, "1:1"),
-                l2_cache_size = kwargs.get("l2_size", 8192)
-            )
+            # # Add the 16 MB SPI RAM at address 0x40000000 # Value at 40010000: afbfcfef
+            #
+            # see https://github.com/xobs/haddecks/blob/master/haddecks.py
+            # Copyright 2018 Sean Cross, Apache license 2.0 http://www.apache.org/licenses/LICENSE-2.0
+            #
+            reset_cycles = 2**14-1
+            ram = SpiRamDualQuad(platform.request("spiram4x", 0), platform.request("spiram4x", 1), dummy=5, reset_cycles=reset_cycles, qpi=True)
+            self.submodules.ram = ram
+            self.register_mem("main_ram", self.mem_map["main_ram"], self.ram.bus, size=16 * 1024 * 1024)
+
+        # Leds -------------------------------------------------------------------------------------
+        if with_led_chaser:
+            self.leds = LedChaser(
+                pads         = platform.request("led", 0),
+                sys_clk_freq = sys_clk_freq)
 
 # Build --------------------------------------------------------------------------------------------
 
