@@ -2,9 +2,13 @@
 # This file is Copyright (c) 2021-2022 Victor Suarez Rovere <suarezvictor@gmail.com>
 # License: BSD-2-Clause
 
+# LearnFPGA libs and demos: https://github.com/BrunoLevy/learn-fpga/tree/master/LiteX/software
+# learn-fpga may be a symolic link to a learn-fpga repo
+LEARNFPGA_LITEX_SOFTWARE ?= learn-fpga/LiteX/software
+
 # Check LiteX's BUILD_DIRECTORY definition.
 
-BUILD_DIRECTORY ?= .
+BUILD_DIRECTORY ?= gateware/build/digilent_arty
 ifeq ($(wildcard $(BUILD_DIRECTORY)/software/include/generated/variables.mak),)
 define ERROR_MSG
 
@@ -15,7 +19,6 @@ $ export BUILD_DIRECTORY=build/digilent_arty
 endef
 $(error $(ERROR_MSG))
 endif
-
 
 # Import LiteX's variables.mak
 include $(BUILD_DIRECTORY)/software/include/generated/variables.mak
@@ -63,12 +66,13 @@ CFLAGS += $(INC) -Wall -Wno-error -std=gnu11 -ggdb $(COPT)
 CFLAGS += -Og -Wdouble-promotion
 
 # Set Include directories.
-INC += -I.
+INC += -I. -I./third-party -I./liblitesdk
 INC += -I$(BUILD)
 INC += -I$(TOP)
 INC += -I$(BUILD_DIRECTORY)/software/include
 INC += -I$(SOC_DIRECTORY)/software/include
 INC += -I$(CPU_DIRECTORY)
+INC += -I$(LEARNFPGA_LITEX_SOFTWARE)/Libs
 
 # Set LDFLAGS.
 LDFLAGS += -nostartfiles -T linker.ld -Wl,-Map=$@.map -Wl,--cref
@@ -81,7 +85,9 @@ LIBS = -Wl,-lc -Wl,-lm
 # Set Sources.
 SRC_C = \
 	main.c \
+	mpmain.c \
 	isr.c \
+	./third-party/printf.c \
 	modmachine.c \
 	moduos.c \
 	modutime.c \
@@ -89,11 +95,13 @@ SRC_C = \
 	litex_led.c \
 	litex_dma.c \
 	litex_video.c \
+	litex_usbhmi.c \
 	machine_hw_spi.c \
 	machine_timer.c \
 	machine_pwm.c \
 	machine_sdcard.c \
 	machine_pin.c \
+	machine_i2s.c \
 	lib/utils/sys_stdio_mphal.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/interrupt_char.c \
@@ -107,6 +115,8 @@ SRC_LITEX = \
 	$(LIBBASE_DIRECTORY)/uart.c \
 	$(LIBLITESDCARD_DIRECTORY)/spisdcard.c \
 	$(LIBLITESDCARD_DIRECTORY)/sdcard.c \
+	$(LEARNFPGA_LITEX_SOFTWARE)/Libs/lite_fb.c \
+	../third-party/usbhost/usb_host.c ../third-party/usbhost/usb_host_hid.c ../third-party/common/tusb_fifo.c \
 
 SRC_C += $(SRC_MOD)
 
@@ -126,6 +136,9 @@ OBJ =  $(CRT0_O) $(addprefix $(BUILD)/, $(SRC_S:.S=.o)) $(PY_O) $(addprefix $(BU
 OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LITEX:.c=.o))
+
+#$(info $$OBJ is: ${OBJ})
+
 
 all: $(BUILD)/firmware.bin
 

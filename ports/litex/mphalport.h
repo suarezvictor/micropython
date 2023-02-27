@@ -7,10 +7,17 @@
 
 #include <uart.h>
 #include "lib/utils/interrupt_char.h"
+#include <stdbool.h>
+
+extern void mp_handle_pending(bool);
+#define MICROPY_EVENT_POLL_HOOK mp_handle_pending(true)
 
 // Receive single character, blocking until one is available.
 static inline int mp_hal_stdin_rx_chr(void) {
     char c;
+    while(!uart_read_nonblock())
+    	MICROPY_EVENT_POLL_HOOK;
+    		
     c = uart_read();
     /* \n to \r conversion for litex_term */
     if (c == '\n')

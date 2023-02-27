@@ -4,7 +4,16 @@
 #ifndef __LITESDK_CSR_DEFS__H_
 #define __LITESDK_CSR_DEFS__H_
 
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
+
 #include "csr_helpers.h"
+
+
+#ifndef LITEX_ALWAYS_INLINE
+#define LITEX_ALWAYS_INLINE inline //__attribute__((always_inline))
+#endif
 
 ////////////////////////////////////////////////////////////
 //supported peripherals
@@ -53,7 +62,7 @@ typedef struct LITEX_PACKED32 //fields arrangement must mach order to get exact 
   litetimer_uptime_latch_t	UPTIME_LATCH;
   litetimer_uptime_cycles_t	UPTIME_CYCLES;
 #endif
-} litetimer_t;
+} volatile litetimer_t;
 
 
 //offset checking
@@ -88,7 +97,7 @@ typedef struct LITEX_PACKED32 //fields arrangement must mach order to get exact 
   litegpio_oe_t		OE;
   litegpio_in_t		IN;
   litegpio_out_t	OUT;
-} litegpio_t;
+} volatile litegpio_t;
 
 //offset checking
 LITEX_OFFSET_ASSERT(CSR_GPIO, litegpio_t, OE);
@@ -119,7 +128,7 @@ typedef struct LITEX_PACKED32 //fields arrangement must mach order to get exact 
   litedma_writer_done_t 	DONE;
   litedma_writer_loop_t 	LOOP;
   litedma_writer_offset_t	OFFSET;
-} litedma_writer_t;
+} volatile litedma_writer_t;
 //TODO: do offset checking with macro LITEX_OFFSET_ASSERT
 
 #endif //CSR_DMA_WRITER_BASE
@@ -148,7 +157,7 @@ typedef struct LITEX_PACKED32 //fields arrangement must mach order to get exact 
   litedma_reader_done_t		DONE;
   litedma_reader_loop_t		LOOP;
   litedma_reader_offset_t	OFFSET;
-} litedma_reader_t;
+} volatile litedma_reader_t;
 //TODO: do offset checking with macro LITEX_OFFSET_ASSERT
 
 #endif //CSR_DMA_READER_BASE

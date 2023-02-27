@@ -24,3 +24,5 @@
  * THE SOFTWARE.
  */
 
+#define MICROPY_PY_FRAMEBUF (1)
+

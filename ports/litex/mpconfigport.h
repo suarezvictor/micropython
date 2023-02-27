@@ -26,6 +26,12 @@
 #define MICROPY_PY_MACHINE_SPI_LSB          (0)
 #define MICROPY_PY_MACHINE_I2C              (1)
 #define MICROPY_PY_UTIME_MP_HAL             (1)
+#if defined(I2S_RX_MEMADDR) || defined(I2S_TX_MEMADDR)
+#define MICROPY_PY_MACHINE_I2S              (1)
+#if !MICROPY_ENABLE_SCHEDULER
+#define MICROPY_ENABLE_SCHEDULER                (1)
+#endif
+#endif
 
 // Type definitions for the specific machine
 
@@ -113,11 +119,13 @@ static inline void mp_hal_delay_us_fast(mp_uint_t us) { us*=4; volatile static u
 
 extern const struct _mp_obj_module_t mp_module_machine;
 extern const struct _mp_obj_module_t mp_module_litex;
+extern const struct _mp_obj_module_t mp_module_imgui_lite;
 extern const struct _mp_obj_module_t mp_module_utime;
 extern const struct _mp_obj_module_t uos_module;
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&mp_module_machine) }, \
     { MP_ROM_QSTR(MP_QSTR_litex),    MP_ROM_PTR(&mp_module_litex)   }, \
+    { MP_ROM_QSTR(MP_QSTR_imgui_lite),    MP_ROM_PTR(&mp_module_imgui_lite)   }, \
     { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, \
     { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&uos_module) }, \
 
@@ -133,13 +141,16 @@ extern const struct _mp_obj_module_t uos_module;
 #elif __vexriscv__
 #define MICROPY_HW_MCU_NAME "VexRiscv CPU"
 #else
-#error "Unknown MCU."
+#define MICROPY_HW_MCU_NAME "Unknown CPU"
+#warning "Unknown MCU."
 #endif
 
 #define MP_STATE_PORT MP_STATE_VM
 
 #ifdef CSR_TIMER0_BASE
-#define MICROPY_ENABLE_SCHEDULER                (1)
+#if !MICROPY_ENABLE_SCHEDULER
+#define MICROPY_ENABLE_SCHEDULER                (1) //scheduler is needed for the timer core
+#endif
 
 #define MICROPY_PORT_ROOT_POINTERS \
     struct _machine_timer_obj_t *machine_timer_obj_head; \

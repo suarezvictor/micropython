@@ -10,6 +10,7 @@ extern const mp_obj_type_t machine_timer_type;
 extern const mp_obj_type_t machine_pwm_type;
 extern const mp_obj_type_t machine_sdcard_type;
 extern const mp_obj_type_t machine_pin_type;
+extern const mp_obj_type_t machine_i2s_type;
 
 void machine_timer_deinit_all(void);
 

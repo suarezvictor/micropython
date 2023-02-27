@@ -57,6 +57,8 @@ int puts(const char *s);
 int vsnprintf(char *str, size_t size, const char *fmt, va_list ap);
 int snprintf(char *str, size_t size, const char *fmt, ...);
 
+//FIXME: ugly hack to use a custom float-supporting printf
+/*
 int printf(const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
@@ -64,6 +66,7 @@ int printf(const char *fmt, ...) {
     va_end(ap);
     return ret;
 }
+*/
 
 int vprintf(const char *fmt, va_list ap) {
     return mp_vprintf(&mp_plat_print, fmt, ap);

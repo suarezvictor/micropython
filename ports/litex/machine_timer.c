@@ -202,7 +202,10 @@ STATIC void machine_timer_isr(void *self_in) {
 #endif
 
 #ifndef ESP32
+/*
 #ifndef TIMER0_POLLING
+//FIXME: this is moved to usb host, since timer is shared. TODO: define a specific timer for USB
+#warning this is moved to usb host, since timer is shared. TODO: define a specific timer for USB
 #warning timer ISE not tested!
 static void *self_isr = NULL;
 void timer0_isr(void)
@@ -213,6 +216,7 @@ void timer0_isr(void)
 #else //not TIMER0_POLLING
 void timer0_isr(void) {}
 #endif
+*/
 #endif //ESP32
 
 STATIC void machine_timer_enable(machine_timer_obj_t *self) {

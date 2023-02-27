@@ -2,6 +2,9 @@
 // This file is Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
 // License: BSD-2-Clause
 
+#include <generated/csr.h> //may define which peripherals are enabled
+#include <generated/soc.h>
+
 #include "py/runtime.h"
 #include "py/obj.h"
 #include "modmachine.h"
@@ -9,25 +12,19 @@
 #include "extmod/machine_spi.h"
 #include "extmod/machine_i2c.h"
 
-#include <generated/csr.h>
-#include <generated/soc.h>
 
 #if MICROPY_PY_MACHINE
 
-size_t strlen(const uint8_t *s) {
-    const uint8_t *ss = s;
-    while (*ss) {
-        ++ss;
-    }
-    return ss - s;
-}
-
 STATIC mp_obj_t machine_identifier(void) {
+#ifdef CSR_IDENTIFIER_MEM_BASE
     int i;
     uint8_t id[256];
     for(i=0;i<256;i++)
         id[i] = MMPTR(CSR_IDENTIFIER_MEM_BASE + 4*i);
     return mp_obj_new_bytes(id, strlen(id));
+#else
+    return mp_const_none;
+#endif
 }
 MP_DEFINE_CONST_FUN_OBJ_0(machine_identifier_obj, machine_identifier);
 
@@ -67,6 +64,9 @@ STATIC const mp_rom_map_elem_t machine_module_globals_table[] = {
 #endif
 #if MICROPY_HW_ENABLE_SDCARD
     { MP_ROM_QSTR(MP_QSTR_SDCard), MP_ROM_PTR(&machine_sdcard_type) },
+#endif
+#if MICROPY_PY_MACHINE_I2S
+    { MP_ROM_QSTR(MP_QSTR_I2S), MP_ROM_PTR(&machine_i2s_type) },
 #endif
 };
 

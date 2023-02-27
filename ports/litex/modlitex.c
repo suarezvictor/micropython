@@ -8,10 +8,14 @@ extern const mp_obj_type_t litex_led_type;
 extern const mp_obj_type_t litex_dmawriter_type;
 extern const mp_obj_type_t litex_dmareader_type;
 extern const mp_obj_type_t litex_video_type;
+extern const mp_obj_type_t litex_usbhmi_type;
 
 STATIC const mp_rom_map_elem_t litex_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_litex) },
     { MP_ROM_QSTR(MP_QSTR_LED),    MP_ROM_PTR(&litex_led_type) },
+#ifdef LITEX_SOFTUSB_HOST
+    { MP_ROM_QSTR(MP_QSTR_USB_HMI),    MP_ROM_PTR(&litex_usbhmi_type) },
+#endif
 #ifdef CSR_DMA_WRITER_BASE
     { MP_ROM_QSTR(MP_QSTR_DMAWriter), MP_ROM_PTR(&litex_dmawriter_type) },
 #endif
