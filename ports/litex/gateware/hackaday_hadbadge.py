@@ -24,6 +24,38 @@ from litex.soc.integration.builder import *
 from spi_ram_dual import SpiRamDualQuad
 from litex.soc.cores.led import LedChaser
 
+# LCD ----------------------------------------------------------------------------------------------
+
+from litex.soc.interconnect import stream
+from litex.soc.cores.video import video_data_layout
+
+class LCD_PHY(Module):
+    def __init__(self, pads, clock_domain="sys"):
+        self.sink = sink = stream.Endpoint(video_data_layout)
+
+        # # #
+        from lcd import LCD
+        self.submodules.lcd = l = LCD(pads)
+
+        # Always ack Sink, no backpressure.
+        self.comb += sink.ready.eq(1)
+
+        # Drive Clk.
+        #self.comb += l.clk.eq(ClockSignal(clock_domain)) #FIXME: better make LCD export the signal
+
+        # Drive Controls.
+        self.comb += l.en.eq(sink.de)
+        self.comb += l.hsync.eq(~sink.hsync) #TODO: why inverted?
+        self.comb += l.vsync.eq(~sink.vsync)
+
+        # Drive Datas.
+        cbits  = len(l.r) #always 8 bits on supported LCDs
+        cshift = (8 - cbits)
+        for i in range(cbits): #an LCD may not need zeroing like analog. It's kept for compatibility
+            self.comb += l.r[i].eq(sink.r[cshift + i] & sink.de)
+            self.comb += l.g[i].eq(sink.g[cshift + i] & sink.de)
+            self.comb += l.b[i].eq(sink.b[cshift + i] & sink.de)
+
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(LiteXModule):
@@ -55,20 +87,12 @@ class _CRG(LiteXModule):
             usb_pll.create_clkout(self.cd_usb_48, 48e6)
             usb_pll.create_clkout(self.cd_usb_12, 12e6)
 
-        """
-        # FPGA Reset (press usr_btn for 1 second to fallback to bootloader)
-        reset_timer = WaitTimer(int(8e6))
-        reset_timer = ClockDomainsRenamer("por")(reset_timer)
-        self.submodules += reset_timer
-        self.comb += reset_timer.wait.eq(~rst_n)
-        self.comb += platform.request("rst_n").eq(~reset_timer.done)
-        """
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
     def __init__(self, toolchain="trellis", sys_clk_freq=int(48e6),
-        with_led_chaser = True, **kwargs):
+        with_led_chaser = True, with_video_terminal = True, **kwargs):
         platform = hackaday_hadbadge.Platform(toolchain=toolchain)
 
         # CRG --------------------------------------------------------------------------------------
@@ -89,6 +113,25 @@ class BaseSoC(SoCCore):
             self.submodules.ram = ram
             self.register_mem("main_ram", self.mem_map["main_ram"], self.ram.bus, size=16 * 1024 * 1024)
 
+
+        # Video Terminal ---------------------------------------------------------------------------
+        if with_video_terminal:
+            from lcd import LCD
+            self.submodules.videophy = LCD_PHY(platform.request("lcd"))
+            timings = ("480x320@60Hz", {
+            	"pix_clk"       : sys_clk_freq, #TODO: check datasheet
+            	"h_active"      : 480,
+	            "h_blanking"    : 8,
+        	    "h_sync_offset" : 2,
+        	    "h_sync_width"  : 2,
+        	    "v_active"      : 320,
+        	    "v_blanking"    : 8,
+        	    "v_sync_offset" : 2,
+        	    "v_sync_width"  : 2,
+    	    })
+            self.add_video_terminal(phy=self.videophy, timings=timings) #does not work
+            #self.add_video_colorbars(phy=self.videophy, timings=timings) #works bad
+            
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:
             self.leds = LedChaser(
