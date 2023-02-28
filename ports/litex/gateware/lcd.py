@@ -2,6 +2,8 @@
 BSD 2-Clause License
 
 Copyright (c) 2019-2021, Linux-on-LiteX-VexRiscv Developers
+Copyright (c) 2023 Victor Suarez Rovere <suarezvictor@gmail.com>
+
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -37,7 +39,7 @@ import CSRTransform
 
 
 class LCD(Module):
-    def __init__(self, pads, sim=False):
+    def __init__(self, pads, ref_freq=25e6, OFFX=45, OFFY=38, sim=False):
         self.r = r = Signal(8)
         self.g = g = Signal(8)
         self.b = b = Signal(8)
@@ -45,8 +47,8 @@ class LCD(Module):
         self.vsync = vs = Signal(1)
         self.en = en = Signal()
 
-        short_delay = int(25e6 * 10e-6)
-        long_delay = int(25e6 * 50e-3)
+        short_delay = int(ref_freq * 10e-6)
+        long_delay = int(ref_freq * 50e-3)
         if sim:
             short_delay = 10
             long_delay = 40
@@ -68,7 +70,7 @@ class LCD(Module):
 
       
 
-        self.submodules.lcd = lcd = CSRTransform.CSRTransform(self)(lcdif.LCDIF(pads))
+        self.submodules.lcd = lcd = CSRTransform.CSRTransform(self)(lcdif.LCDIF(pads, OFFX=OFFX, OFFY=OFFY))
 
 
         # add logic to init the screen?

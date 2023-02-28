@@ -30,31 +30,27 @@ from litex.soc.interconnect import stream
 from litex.soc.cores.video import video_data_layout
 
 class LCD_PHY(Module):
-    def __init__(self, pads, clock_domain="sys"):
+    def __init__(self, pads, clock_domain="sys", ref_freq=25e6):
         self.sink = sink = stream.Endpoint(video_data_layout)
 
         # # #
-        from lcd import LCD
-        self.submodules.lcd = l = LCD(pads)
+        from lcd import LCD # AUO H320QN01
+        l = LCD(pads, ref_freq=ref_freq, OFFX=56-3, OFFY=56-3) #seems like blanking-sync_offset-3
+        l = ClockDomainsRenamer(clock_domain)(l)
+        self.submodules.lcd = l
 
         # Always ack Sink, no backpressure.
         self.comb += sink.ready.eq(1)
 
-        # Drive Clk.
-        #self.comb += l.clk.eq(ClockSignal(clock_domain)) #FIXME: better make LCD export the signal
-
         # Drive Controls.
         self.comb += l.en.eq(sink.de)
-        self.comb += l.hsync.eq(~sink.hsync) #TODO: why inverted?
+        self.comb += l.hsync.eq(~sink.hsync)
         self.comb += l.vsync.eq(~sink.vsync)
 
         # Drive Datas.
-        cbits  = len(l.r) #always 8 bits on supported LCDs
-        cshift = (8 - cbits)
-        for i in range(cbits): #an LCD may not need zeroing like analog. It's kept for compatibility
-            self.comb += l.r[i].eq(sink.r[cshift + i] & sink.de)
-            self.comb += l.g[i].eq(sink.g[cshift + i] & sink.de)
-            self.comb += l.b[i].eq(sink.b[cshift + i] & sink.de)
+        self.comb += l.r.eq(sink.r)
+        self.comb += l.g.eq(sink.g)
+        self.comb += l.b.eq(sink.b)
 
 # CRG ----------------------------------------------------------------------------------------------
 
@@ -117,20 +113,21 @@ class BaseSoC(SoCCore):
         # Video Terminal ---------------------------------------------------------------------------
         if with_video_terminal:
             from lcd import LCD
-            self.submodules.videophy = LCD_PHY(platform.request("lcd"))
+            lcd_clk = "usb_12" #use a lower clock for the display
+            self.submodules.videophy = LCD_PHY(platform.request("lcd"), clock_domain=lcd_clk, ref_freq=12e6)
             timings = ("480x320@60Hz", {
-            	"pix_clk"       : sys_clk_freq, #TODO: check datasheet
+            	"pix_clk"       : 12e6, #TODO: check datasheet
             	"h_active"      : 480,
-	            "h_blanking"    : 8,
-        	    "h_sync_offset" : 2,
-        	    "h_sync_width"  : 2,
+	            "h_blanking"    : 64,
+        	    "h_sync_offset" : 8,
+        	    "h_sync_width"  : 24,
         	    "v_active"      : 320,
-        	    "v_blanking"    : 8,
-        	    "v_sync_offset" : 2,
-        	    "v_sync_width"  : 2,
+        	    "v_blanking"    : 64,
+        	    "v_sync_offset" : 8,
+        	    "v_sync_width"  : 24,
     	    })
-            self.add_video_terminal(phy=self.videophy, timings=timings) #does not work
-            #self.add_video_colorbars(phy=self.videophy, timings=timings) #works bad
+            self.add_video_terminal(phy=self.videophy, timings=timings, clock_domain=lcd_clk)
+            #self.add_video_colorbars(phy=self.videophy, timings=timings, clock_domain=lcd_clk)
             
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:

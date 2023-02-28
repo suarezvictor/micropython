@@ -2,6 +2,7 @@
 BSD 2-Clause License
 
 Copyright (c) 2019-2021, Linux-on-LiteX-VexRiscv Developers
+Copyright (c) 2023 Victor Suarez Rovere <suarezvictor@gmail.com>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -33,7 +34,7 @@ from migen import *
 from migen.genlib import fifo
 
 class LCDIF(Module, AutoCSR, AutoDoc):
-    def __init__(self, pads):
+    def __init__(self, pads, OFFX=45, OFFY=38):
         # All MIPI commands and data are 8-bits, with the exception of commands
         # to read and write memory to the LCD.
         # self.intro = ModuleDoc(title="LCDIF", body=""" """)
@@ -234,14 +235,14 @@ class LCDIF(Module, AutoCSR, AutoDoc):
                 If(vsync,
                     NextValue(x, 0),
                     NextValue(y, 0),
-                    NextValue(off_y, 38),
-                    NextValue(off_x, 45),
+                    NextValue(off_y, OFFY),
+                    NextValue(off_x, OFFX),
                     NextValue(frame_count,frame_count + 1),
                     
                 ),
                     If(hsync,
                         NextValue(x, 0),
-                        NextValue(off_x,45),
+                        NextValue(off_x, OFFX),
                         If(off_y,
                             NextValue(off_y, off_y - 1),
                         ).Else(
