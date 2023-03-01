@@ -43,17 +43,29 @@ lcd_timings = ("480x320@60Hz", {
     "v_sync_width"  : 24,
 })
 
-dvi_pads = ("dvi_out", 0,
-    Subsignal("data0_p",     Pins("N19"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
-    Subsignal("data0_n",     Pins("N20"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
-    Subsignal("data1_p",     Pins("L20"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
-    Subsignal("data1_n",     Pins("M20"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
-    Subsignal("data2_p",     Pins("L16"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
-    Subsignal("data2_n",     Pins("L17"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
-    Subsignal("clk_p",       Pins("P20"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
-    Subsignal("clk_n",       Pins("R20"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
+dvi_pads = ("dvi_out", 0, #DRIVE=4 should limit current to 4mA => +/-200mV (exactly what CML expects) 
+#    Subsignal("data0_p",     Pins("N19"), IOStandard("LVCMOS33"), Misc("SLEWRATE=FAST"), Misc("DRIVE=4")),
+#    Subsignal("data0_n",     Pins("N20"), IOStandard("LVCMOS33"), Misc("SLEWRATE=FAST"), Misc("DRIVE=4")),
+#    Subsignal("data1_p",     Pins("L20"), IOStandard("LVCMOS33"), Misc("SLEWRATE=FAST"), Misc("DRIVE=4")),
+#    Subsignal("data1_n",     Pins("M20"), IOStandard("LVCMOS33"), Misc("SLEWRATE=FAST"), Misc("DRIVE=4")),
+#    Subsignal("data2_p",     Pins("L16"), IOStandard("LVCMOS33"), Misc("SLEWRATE=FAST"), Misc("DRIVE=4")),
+#    Subsignal("data2_n",     Pins("L17"), IOStandard("LVCMOS33"), Misc("SLEWRATE=FAST"), Misc("DRIVE=4")),
+#    Subsignal("clk_p",       Pins("P20"), IOStandard("LVCMOS33"), Misc("SLEWRATE=FAST"), Misc("DRIVE=4")),
+#    Subsignal("clk_n",       Pins("R20"), IOStandard("LVCMOS33"), Misc("SLEWRATE=FAST"), Misc("DRIVE=4")),
+    Subsignal("data0_p",     Pins("N19"), IOStandard("LVDS")), #good up to 550mbps (500 specified for ODDRX1)
+    Subsignal("data1_p",     Pins("L20"), IOStandard("LVDS")),
+    Subsignal("data2_p",     Pins("L16"), IOStandard("LVDS")),
+    Subsignal("clk_p",       Pins("P20"), IOStandard("LVDS")),
 )
-    
+
+# HAD: LFE5U-45F-8BG381C (8=max speed, C=commercial) - 400MHz max with LVDS+GDDRX2 (150MHz with LVCMOS33)
+# High speed differential pins
+# A2 A4 A5 B1 B4 C1 C4 C18 C20 D1 D5 D17 D18 D19 E3 E4 E17 E20 F1 F3 F4 F17 F19 G2 G3 G5 G18 G19 H4 H17 H18 H20 J1
+# J4 J5 J19 K2 K4 K5 K19 L16* L17* L20* M1 M3 M4 M5 M17 M20* N2 N3 N5 N16 N17 N19* N20* P1 P2 P16 P20* R18 R20* T16 T19 U17 U18
+# *DVI connector (AC coupled)
+
+# RADIONA: DVI AC coupled
+
 class LCD_PHY(Module):
     def __init__(self, pads, clock_domain="sys", ref_freq=25e6):
         self.sink = sink = stream.Endpoint(video_data_layout)
@@ -111,8 +123,11 @@ class _CRG(LiteXModule):
             video_pll.register_clkin(clk8, 8e6)
             self.cd_dvi = ClockDomain()
             self.cd_dvi5x = ClockDomain()
-            video_pll.create_clkout(self.cd_dvi, 25e6)
-            video_pll.create_clkout(self.cd_dvi5x, 5*25e6)
+            video_clock = 55e6
+            video_pll.create_clkout(self.cd_dvi, video_clock)
+            video_pll.create_clkout(self.cd_dvi5x, 5*video_clock)
+            #self.cd_dvi25x = ClockDomain()
+            #video_pll.create_clkout(self.cd_dvi25x, 2.5*video_clock) #this is for ODDRX2
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
@@ -157,7 +172,11 @@ class BaseSoC(SoCCore):
             from litex.soc.cores.video import VideoHDMIPHY
             platform.add_extension([dvi_pads])
             self.submodules.videophy = VideoHDMIPHY(platform.request("dvi_out"), clock_domain="dvi")
-            self.add_video_colorbars(phy=self.videophy, timings="640x480@60Hz", clock_domain="dvi")
+            #timings = "640x480@60Hz" #works with LVCMOS33/12
+            #timings = "800x600@60Hz" #works with LVCMOS33/12 & LVDS
+            timings = "1024x768@60Hz" #works with LVDS @ 55MHz (bat  at 60MHz, not at all at 65MHz)
+            #timings = "1280x720@60Hz" #doesn't work
+            self.add_video_colorbars(phy=self.videophy, timings=timings, clock_domain="dvi")
             
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:
