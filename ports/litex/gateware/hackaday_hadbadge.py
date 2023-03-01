@@ -4,7 +4,7 @@
 # This file is part of LiteX-Boards.
 #
 # Copyright (c) 2020 Michael Welling <mwelling@ieee.org>
-# Copyright (c) 2020 Sean Cross <sean@xobs.io>
+# Copyright (c) 2020 Sean Cross <sean@xobs.io> some portions Apache License 2.0
 # Copyright (c) 2020 Drew Fustini <drew@pdp7.com>
 # Copyright (c) 2020 Florent Kermarrec <florent@enjoy-digital.fr>
 # Copyright (c) 2023 Victor Suarez Rovere <suarezvictor@gmail.com>
@@ -24,18 +24,43 @@ from litex.soc.integration.builder import *
 from spi_ram_dual import SpiRamDualQuad
 from litex.soc.cores.led import LedChaser
 
+from litex.build.generic_platform import Subsignal, Pins, IOStandard, Misc
+
 # LCD ----------------------------------------------------------------------------------------------
 
 from litex.soc.interconnect import stream
 from litex.soc.cores.video import video_data_layout
 
+lcd_timings = ("480x320@60Hz", {
+	"pix_clk"       : 12e6, #TODO: check datasheet
+	"h_active"      : 480,
+    "h_blanking"    : 64,
+    "h_sync_offset" : 8,
+    "h_sync_width"  : 24,
+    "v_active"      : 320,
+    "v_blanking"    : 64,
+    "v_sync_offset" : 8,
+    "v_sync_width"  : 24,
+})
+
+dvi_pads = ("dvi_out", 0,
+    Subsignal("data0_p",     Pins("N19"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
+    Subsignal("data0_n",     Pins("N20"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
+    Subsignal("data1_p",     Pins("L20"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
+    Subsignal("data1_n",     Pins("M20"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
+    Subsignal("data2_p",     Pins("L16"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
+    Subsignal("data2_n",     Pins("L17"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
+    Subsignal("clk_p",       Pins("P20"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
+    Subsignal("clk_n",       Pins("R20"), IOStandard("LVCMOS33"), Misc("DRIVE=4")),
+)
+    
 class LCD_PHY(Module):
     def __init__(self, pads, clock_domain="sys", ref_freq=25e6):
         self.sink = sink = stream.Endpoint(video_data_layout)
 
         # # #
         from lcd import LCD # AUO H320QN01
-        l = LCD(pads, ref_freq=ref_freq, OFFX=56-3, OFFY=56-3) #seems like blanking-sync_offset-3
+        l = LCD(pads, ref_freq=ref_freq, OFFX=56-3, OFFY=56) #OFFX seems like blanking-sync_offset-3
         l = ClockDomainsRenamer(clock_domain)(l)
         self.submodules.lcd = l
 
@@ -55,7 +80,7 @@ class LCD_PHY(Module):
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(LiteXModule):
-    def __init__(self, platform, sys_clk_freq, with_usb_pll=True):
+    def __init__(self, platform, sys_clk_freq, with_usb_pll=True, with_video_pll=True):
         self.rst    = Signal()
         self.cd_sys = ClockDomain()
 
@@ -76,19 +101,27 @@ class _CRG(LiteXModule):
         if with_usb_pll:
             self.cd_usb_12 = ClockDomain()
             self.cd_usb_48 = ClockDomain()
-            usb_pll = pll
-            #self.submodules += usb_pll
-            #self.comb += usb_pll.reset.eq(~por_done)
-            usb_pll.register_clkin(clk8, 8e6)
-            usb_pll.create_clkout(self.cd_usb_48, 48e6)
-            usb_pll.create_clkout(self.cd_usb_12, 12e6)
+            pll.create_clkout(self.cd_usb_48, 48e6)
+            pll.create_clkout(self.cd_usb_12, 12e6)
 
+        # Video PLL
+        if with_video_pll:
+            self.submodules.video_pll = video_pll = ECP5PLL()
+            video_pll.pfd_freq_range = pll.pfd_freq_range
+            video_pll.register_clkin(clk8, 8e6)
+            self.cd_dvi = ClockDomain()
+            self.cd_dvi5x = ClockDomain()
+            video_pll.create_clkout(self.cd_dvi, 25e6)
+            video_pll.create_clkout(self.cd_dvi5x, 5*25e6)
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
 class BaseSoC(SoCCore):
     def __init__(self, toolchain="trellis", sys_clk_freq=int(48e6),
-        with_led_chaser = True, with_video_terminal = True, **kwargs):
+        with_led_chaser = True,
+        with_video_terminal = False,
+        with_video_framebuffer = True,
+        **kwargs):
         platform = hackaday_hadbadge.Platform(toolchain=toolchain)
 
         # CRG --------------------------------------------------------------------------------------
@@ -99,14 +132,15 @@ class BaseSoC(SoCCore):
 
         # SPI RAM ----------------------------------------------------------------------------------
         if not self.integrated_main_ram_size:
-            # # Add the 16 MB SPI RAM at address 0x40000000 # Value at 40010000: afbfcfef
-            #
+            # Add the 16 MB SPI RAM at address 0x40000000 # Value at 40010000: afbfcfef
             # see https://github.com/xobs/haddecks/blob/master/haddecks.py
-            # Copyright 2018 Sean Cross, Apache license 2.0 http://www.apache.org/licenses/LICENSE-2.0
-            #
             reset_cycles = 2**14-1
-            ram = SpiRamDualQuad(platform.request("spiram4x", 0), platform.request("spiram4x", 1), dummy=5, reset_cycles=reset_cycles, qpi=True)
-            self.submodules.ram = ram
+            self.submodules.ram = ram = SpiRamDualQuad(
+            	platform.request("spiram4x", 0),
+            	platform.request("spiram4x", 1),
+            	dummy=5,
+            	reset_cycles=reset_cycles,
+            	qpi=True)
             self.register_mem("main_ram", self.mem_map["main_ram"], self.ram.bus, size=16 * 1024 * 1024)
 
 
@@ -115,19 +149,15 @@ class BaseSoC(SoCCore):
             from lcd import LCD
             lcd_clk = "usb_12" #use a lower clock for the display
             self.submodules.videophy = LCD_PHY(platform.request("lcd"), clock_domain=lcd_clk, ref_freq=12e6)
-            timings = ("480x320@60Hz", {
-            	"pix_clk"       : 12e6, #TODO: check datasheet
-            	"h_active"      : 480,
-	            "h_blanking"    : 64,
-        	    "h_sync_offset" : 8,
-        	    "h_sync_width"  : 24,
-        	    "v_active"      : 320,
-        	    "v_blanking"    : 64,
-        	    "v_sync_offset" : 8,
-        	    "v_sync_width"  : 24,
-    	    })
-            self.add_video_terminal(phy=self.videophy, timings=timings, clock_domain=lcd_clk)
-            #self.add_video_colorbars(phy=self.videophy, timings=timings, clock_domain=lcd_clk)
+            self.add_video_terminal(phy=self.videophy, timings=lcd_timings, clock_domain=lcd_clk)
+
+        # Video Framebuffer ------------------------------------------------------------------------
+        if with_video_framebuffer:
+            #see VideoFrameBuffer https://github.com/enjoy-digital/litex/blob/master/litex/soc/cores/video.py#L625
+            from litex.soc.cores.video import VideoHDMIPHY
+            platform.add_extension([dvi_pads])
+            self.submodules.videophy = VideoHDMIPHY(platform.request("dvi_out"), clock_domain="dvi")
+            self.add_video_colorbars(phy=self.videophy, timings="640x480@60Hz", clock_domain="dvi")
             
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:
