@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <liblitesdk/litex.h>
 #include "irq.h"
 #include "uart.h"
 

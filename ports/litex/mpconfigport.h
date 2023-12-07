@@ -119,13 +119,11 @@ static inline void mp_hal_delay_us_fast(mp_uint_t us) { us*=4; volatile static u
 
 extern const struct _mp_obj_module_t mp_module_machine;
 extern const struct _mp_obj_module_t mp_module_litex;
-extern const struct _mp_obj_module_t mp_module_imgui_lite;
 extern const struct _mp_obj_module_t mp_module_utime;
 extern const struct _mp_obj_module_t uos_module;
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&mp_module_machine) }, \
     { MP_ROM_QSTR(MP_QSTR_litex),    MP_ROM_PTR(&mp_module_litex)   }, \
-    { MP_ROM_QSTR(MP_QSTR_imgui_lite),    MP_ROM_PTR(&mp_module_imgui_lite)   }, \
     { MP_ROM_QSTR(MP_QSTR_utime), MP_ROM_PTR(&mp_module_utime) }, \
     { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&uos_module) }, \
 

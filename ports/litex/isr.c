@@ -7,7 +7,7 @@
 #include <generated/soc.h>
 #include <irq.h>
 #include <uart.h>
-#include <litex.h>
+#include <litex_sdk/litex.h>
 
 void __attribute__((weak)) timer0_isr(void);
 void __attribute__((weak)) i2s_tx_isr(void);
