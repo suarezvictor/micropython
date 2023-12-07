@@ -1,9 +1,6 @@
 # This file is Copyright (c) 2017-2021 Fupy/LiteX-MicroPython Developers
-# This file is Copyright (c) 2021-2022 Victor Suarez Rovere <suarezvictor@gmail.com>
+# This file is Copyright (c) 2021-2023 Victor Suarez Rovere <suarezvictor@gmail.com>
 # License: BSD-2-Clause
-
-# LearnFPGA libs and demos: https://github.com/BrunoLevy/learn-fpga/tree/master/LiteX/software
-# learn-fpga may be a symolic link to a learn-fpga repo
 
 # Check LiteX's BUILD_DIRECTORY definition.
 BUILD_DIRECTORY=../../../build/digilent_arty
@@ -65,7 +62,7 @@ CFLAGS += $(INC) -Wall -Wno-error -std=gnu11 -ggdb $(COPT)
 CFLAGS += -Og -Wdouble-promotion
 
 # Set Include directories.
-INC += -I. -I../../../../Libs/
+INC += -I. -I../../../Libs/
 INC += -I$(BUILD)
 INC += -I$(TOP)
 INC += -I$(BUILD_DIRECTORY)/software/include

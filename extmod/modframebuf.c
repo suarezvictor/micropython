@@ -38,8 +38,7 @@
 #ifdef MICROPY_ENABLE_FRAMEBUFFER_ACCEL
 
 #define ACCEL_STATIC_ASSERT(cond, msg) STATIC_ASSERT(cond, msg);
-#warning fix abs path below
-#include </media/vsuarez/elocaldata/SCRATCH/gpu2d/test/accel_cores.h> //FIXME: abs path
+#include <../../../accel_cores.h>
 
 static void _rectangle_fill32(accel_rectangle_fill32_layout_t *regs, uintptr_t fb_base, int x0, int y0, int x1, int y1, uint32_t rgba, unsigned frame_pitch)
 {
@@ -65,6 +64,35 @@ static void _rectangle_fill32(accel_rectangle_fill32_layout_t *regs, uintptr_t f
   regs->ystride = frame_pitch;
   regs->rgba = rgba;
 
+  regs->run = 1; //start
+  while(!regs->done); //wait until done
+}
+
+static void _ellipse_fill32(accel_ellipse_fill32_layout_t *regs, uintptr_t fb_base, int x0, int y0, int x1, int y1, uint32_t rgba, unsigned frame_pitch)
+{
+#ifndef ACCEL_ELLIPSE_FILL32_CSR_PAGE_OFFSET
+#error MICROPY_ENABLE_FRAMEBUFFER_ACCEL is defined but ACCEL_ELLIPSE_FILL32_CSR_PAGE_OFFSET is not defined
+#endif
+
+#if defined(VRAM_ORIGIN_ACCEL_ELLIPSE_FILL32) && defined(VIDEO_FRAMEBUFFER_BASE) && VRAM_ORIGIN_ACCEL_ELLIPSE_FILL32 != VIDEO_FRAMEBUFFER_BASE
+#warning VRAM_ORIGIN_ACCEL_ELLIPSE_FILL32 should be tested
+  fb_base += VRAM_ORIGIN_ACCEL_ELLIPSE_FILL32 - VIDEO_FRAMEBUFFER_BASE;
+#endif
+
+  regs->run = 0; //stops
+  while(regs->done); //wait data latch
+
+  fb_base += (y0<y1?y0:y1)*frame_pitch + (x0<x1?x0:x1)*sizeof(rgba);
+
+  regs->x0 = x0 < x1 ? x0 : x1;
+  regs->x1 = 1 + (x1 > x0 ? x1 : x0);
+  regs->y0 = y0 < y1 ? y0 : y1;
+  regs->y1 = 1 + (y1 > y0 ? y1 : y0);
+  regs->base = fb_base;
+  regs->xstride = VIDEO_FRAMEBUFFER_DEPTH/8;
+  regs->ystride = frame_pitch;
+  regs->rgba = rgba;
+  
   regs->run = 1; //start
   while(!regs->done); //wait until done
 }
@@ -429,6 +457,12 @@ STATIC mp_obj_t framebuf_make_new(const mp_obj_type_t *type, size_t n_args, size
     return MP_OBJ_FROM_PTR(o);
 }
 
+STATIC void framebuf_args(const mp_obj_t *args_in, mp_int_t *args_out, int n) {
+    for (int i = 0; i < n; ++i) {
+        args_out[i] = mp_obj_get_int(args_in[i + 1]);
+    }
+}
+
 STATIC mp_int_t framebuf_get_buffer(mp_obj_t self_in, mp_buffer_info_t *bufinfo, mp_uint_t flags) {
     (void)flags;
     mp_obj_framebuf_t *self = MP_OBJ_TO_PTR(self_in);
@@ -538,6 +572,9 @@ STATIC mp_obj_t framebuf_line(size_t n_args, const mp_obj_t *args) {
     mp_int_t y2 = mp_obj_get_int(args[4]);
     mp_int_t col = mp_obj_get_int(args[5]);
 
+#ifdef MICROPY_ENABLE_FRAMEBUFFER_ACCEL
+#warning MICROPY_ENABLE_FRAMEBUFFER_ACCEL but no line implementation //FIXME: call line accelerator
+#else
     mp_int_t dx = x2 - x1;
     mp_int_t sx;
     if (dx > 0) {
@@ -595,10 +632,51 @@ STATIC mp_obj_t framebuf_line(size_t n_args, const mp_obj_t *args) {
     if (0 <= x2 && x2 < self->width && 0 <= y2 && y2 < self->height) {
         setpixel(self, x2, y2, col);
     }
+#endif
 
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(framebuf_line_obj, 6, 6, framebuf_line);
+
+#ifdef MICROPY_ENABLE_FRAMEBUFFER_ACCEL
+
+// Q2 Q1
+// Q3 Q4
+#define ELLIPSE_MASK_FILL (0x10)
+#define ELLIPSE_MASK_ALL (0x0f)
+#define ELLIPSE_MASK_Q1 (0x01)
+#define ELLIPSE_MASK_Q2 (0x02)
+#define ELLIPSE_MASK_Q3 (0x04)
+#define ELLIPSE_MASK_Q4 (0x08)
+
+STATIC mp_obj_t framebuf_ellipse(size_t n_args, const mp_obj_t *args_in) {
+    mp_obj_framebuf_t *fb = MP_OBJ_TO_PTR(args_in[0]);
+
+    if(fb->format != FRAMEBUF_RGB32)
+      mp_raise_ValueError(MP_ERROR_TEXT("Accelerated ellipse requires 32-bit color"));
+    
+    mp_int_t args[5];
+    framebuf_args(args_in, args, 5); // cx, cy, xradius, yradius, col
+    mp_int_t mask = (n_args > 6 && mp_obj_is_true(args_in[6])) ? ELLIPSE_MASK_FILL : 0;
+    if (n_args > 7) {
+        mask |= mp_obj_get_int(args_in[7]) & ELLIPSE_MASK_ALL;
+    } else {
+        mask |= ELLIPSE_MASK_ALL;
+    }
+
+    if(mask != (ELLIPSE_MASK_FILL | ELLIPSE_MASK_ALL))
+      mp_raise_ValueError(MP_ERROR_TEXT("Accelerated ellipse should be filled and on all its quadrants"));
+
+    mp_int_t cx = args[0], cy = args[1], xr = args[2], yr = args[3];
+    uint32_t col = args[4];
+    //printf("framebuf_ellipse: buf 0x%p, cx = %d, cy = %d, xr = %d, yr = %d, col = 0x%08lX\n", fb->buf, cx, cy, xr, yr, col);
+    _ellipse_fill32(accel_ellipse_fill32_regs, (uintptr_t) fb->buf, cx - xr, cy - yr, cx + xr, cy + yr, col, fb->stride*sizeof(col));
+
+    return mp_const_none;
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(framebuf_ellipse_obj, 6, 8, framebuf_ellipse);
+#endif
 
 STATIC mp_obj_t framebuf_blit(size_t n_args, const mp_obj_t *args) {
     mp_obj_framebuf_t *self = MP_OBJ_TO_PTR(args[0]);
@@ -815,6 +893,9 @@ STATIC const mp_rom_map_elem_t framebuf_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_blit), MP_ROM_PTR(&framebuf_blit_obj) },
     { MP_ROM_QSTR(MP_QSTR_scroll), MP_ROM_PTR(&framebuf_scroll_obj) },
     { MP_ROM_QSTR(MP_QSTR_text), MP_ROM_PTR(&framebuf_text_obj) },
+#ifdef MICROPY_ENABLE_FRAMEBUFFER_ACCEL
+    { MP_ROM_QSTR(MP_QSTR_ellipse), MP_ROM_PTR(&framebuf_ellipse_obj) },
+#endif
 #ifdef FRAMEBUFFER_DEBUG
     { MP_ROM_QSTR(MP_QSTR_debug_update), MP_ROM_PTR(&framebuf_debug_update_obj) },
     { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&framebuf_del_obj) },
