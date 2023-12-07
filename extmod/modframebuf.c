@@ -24,13 +24,60 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+ 
+#define MICROPY_ENABLE_FRAMEBUFFER_ACCEL //TODO: move to config file (mphalport.h or mpconfigport.h)
 
 #include <stdio.h>
 #include <string.h>
+#include <csr_helpers.h>
 
 #include "py/runtime.h"
 
 #if MICROPY_PY_FRAMEBUF
+
+#ifdef MICROPY_ENABLE_FRAMEBUFFER_ACCEL
+
+#define ACCEL_STATIC_ASSERT(cond, msg) STATIC_ASSERT(cond, msg);
+#warning fix abs path below
+#include </media/vsuarez/elocaldata/SCRATCH/gpu2d/test/accel_cores.h> //FIXME: abs path
+
+static void _rectangle_fill32(accel_rectangle_fill32_layout_t *regs, uintptr_t fb_base, int x0, int y0, int x1, int y1, uint32_t rgba, unsigned frame_pitch)
+{
+#ifndef ACCEL_RECTANGLE_FILL32_CSR_PAGE_OFFSET
+#error MICROPY_ENABLE_FRAMEBUFFER_ACCEL is defined but ACCEL_RECTANGLE_FILL32_CSR_PAGE_OFFSET is not defined
+#endif
+
+#if defined(VRAM_ORIGIN_ACCEL_RECTANGLE_FILL32) && defined(VIDEO_FRAMEBUFFER_BASE) && VRAM_ORIGIN_ACCEL_RECTANGLE_FILL32 != VIDEO_FRAMEBUFFER_BASE
+#warning VRAM_ORIGIN_ACCEL_RECTANGLE_FILL32 should be tested
+  fb_base += VRAM_ORIGIN_ACCEL_RECTANGLE_FILL32 - VIDEO_FRAMEBUFFER_BASE;
+#endif
+
+  regs->run = 0; //stps
+  while(regs->done); //wait data latch
+
+  fb_base += (y0<y1?y0:y1)*frame_pitch + (x0<x1?x0:x1)*sizeof(rgba);
+  regs->x0 = x0 < x1 ? x0 : x1;
+  regs->x1 = 1 + (x1 > x0 ? x1 : x0);
+  regs->y0 = y0 < y1 ? y0 : y1;
+  regs->y1 = 1 + (y1 > y0 ? y1 : y0);
+  regs->base = fb_base;
+  regs->xstride = VIDEO_FRAMEBUFFER_DEPTH/8;
+  regs->ystride = frame_pitch;
+  regs->rgba = rgba;
+
+  regs->run = 1; //start
+  while(!regs->done); //wait until done
+}
+
+#endif //MICROPY_ENABLE_FRAMEBUFFER_ACCEL
+
+
+#ifndef VIDEO_FRAMEBUFFER_BASE
+#warning MICROPY_ENABLE_FRAMEBUFFER_ACCEL defined but VIDEO_FRAMEBUFFER_BASE not defined
+#undef MICROPY_ENABLE_FRAMEBUFFER_ACCEL
+#endif
+
+
 
 #if defined(_DEBUG) && defined(__linux__)
 #define FRAMEBUFFER_DEBUG
@@ -91,7 +138,7 @@ typedef struct _mp_framebuf_p_t {
 #define FRAMEBUF_GS8      (6)
 #define FRAMEBUF_MHLSB    (3)
 #define FRAMEBUF_MHMSB    (4)
-#define FRAMEBUF_RGB32    (7)
+#define FRAMEBUF_RGB32    (7) //this is an addition to the standard, that doesn't support RGB32
 
 // Functions for MHLSB and MHMSB
 
@@ -168,7 +215,11 @@ STATIC void rgb565_fill_rect(const mp_obj_framebuf_t *fb, unsigned int x, unsign
 // Functions for RGB32 format
 
 STATIC void rgb32_setpixel(const mp_obj_framebuf_t *fb, unsigned int x, unsigned int y, uint32_t col) {
+#ifdef MICROPY_ENABLE_FRAMEBUFFER_ACCEL
+    _rectangle_fill32(accel_rectangle_fill32_regs, (uintptr_t) fb->buf, x, y, x, y, col, fb->stride*sizeof(col));
+#else
     ((uint32_t *)fb->buf)[x + y * fb->stride] = col;
+#endif
 }
 
 STATIC uint32_t rgb32_getpixel(const mp_obj_framebuf_t *fb, unsigned int x, unsigned int y) {
@@ -176,7 +227,10 @@ STATIC uint32_t rgb32_getpixel(const mp_obj_framebuf_t *fb, unsigned int x, unsi
 }
 
 STATIC void rgb32_fill_rect(const mp_obj_framebuf_t *fb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, uint32_t col) {
-    //FIXME: use DMA if available
+#ifdef MICROPY_ENABLE_FRAMEBUFFER_ACCEL
+#warning accelerator should check that target memory is within accesible video ram, or resort to software rendering
+    _rectangle_fill32(accel_rectangle_fill32_regs, (uintptr_t) fb->buf, x, y, x+w-1, y+h-1, col, fb->stride*sizeof(col));
+#else
     uint32_t *b = &((uint32_t *)fb->buf)[x + y * fb->stride];
     while (h--) {
         for (unsigned int ww = w; ww; --ww) {
@@ -184,6 +238,7 @@ STATIC void rgb32_fill_rect(const mp_obj_framebuf_t *fb, unsigned int x, unsigne
         }
         b += fb->stride - w;
     }
+#endif
 }
 // Functions for GS2_HMSB format
 

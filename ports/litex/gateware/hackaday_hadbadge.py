@@ -43,6 +43,18 @@ lcd_timings = ("480x320@60Hz", {
     "v_sync_width"  : 24,
 })
 
+hd_rb_timings = ("1280x720@50Hz(RB)", {
+        "pix_clk"       : 53.125e6, #works with LVDS and video capture, 52-55MHz (check exact value)
+        "h_active"      : 1280,
+        "h_blanking"    : 160,
+        "h_sync_offset" : 48,
+        "h_sync_width"  : 32,
+        "v_active"      : 720,
+        "v_blanking"    : 13,
+        "v_sync_offset" : 3,
+        "v_sync_width"  : 5,
+})
+
 dvi_pads = ("dvi_out", 0, #DRIVE=4 should limit current to 4mA => +/-200mV (exactly what CML expects) 
 #    Subsignal("data0_p",     Pins("N19"), IOStandard("LVCMOS33"), Misc("SLEWRATE=FAST"), Misc("DRIVE=4")),
 #    Subsignal("data0_n",     Pins("N20"), IOStandard("LVCMOS33"), Misc("SLEWRATE=FAST"), Misc("DRIVE=4")),
@@ -88,6 +100,35 @@ class LCD_PHY(Module):
         self.comb += l.r.eq(sink.r)
         self.comb += l.g.eq(sink.g)
         self.comb += l.b.eq(sink.b)
+
+
+from litex.soc.cores.video import video_timing_layout, hbits, vbits
+from migen.genlib.cdc import MultiReg
+
+class CustomPattern(Module):
+    def __init__(self):
+        self.enable   = Signal(reset=1)
+        self.vtg_sink = vtg_sink   = stream.Endpoint(video_timing_layout)
+        self.source   = source = stream.Endpoint(video_data_layout)
+        self.frame = Signal(8, reset=0) #FIXME: more than 8 bits bring errors
+
+        # # #
+
+        enable = Signal()
+        self.specials += MultiReg(self.enable, enable)
+
+        # Control Path.
+        self.comb += vtg_sink.connect(source, keep={"valid", "ready", "last", "de", "hsync", "vsync"}),
+
+        self.comb += [
+                source.r.eq(self.frame[:8]),
+                source.g.eq(vtg_sink.hcount + self.frame[:8]),
+                source.b.eq(vtg_sink.hcount ^ vtg_sink.vcount)
+            ]
+
+        self.sync += If(vtg_sink.valid & (vtg_sink.hcount == 0) & (vtg_sink.vcount == 0),
+                self.frame.eq(self.frame + 1))
+
 
 # CRG ----------------------------------------------------------------------------------------------
 
@@ -174,7 +215,8 @@ class BaseSoC(SoCCore):
             self.submodules.videophy = VideoHDMIPHY(platform.request("dvi_out"), clock_domain="dvi")
             #timings = "640x480@60Hz" #works with LVCMOS33/12
             #timings = "800x600@60Hz" #works with LVCMOS33/12 & LVDS
-            timings = "1024x768@60Hz" #works with LVDS @ 55MHz (bat  at 60MHz, not at all at 65MHz)
+            #timings = "1024x768@60Hz" #works with LVDS @ 55MHz (bat at 60MHz, not at all at 65MHz)
+            timings = hd_rb_timings #works with LVDS and video capture, 52-55MHz
             #timings = "1280x720@60Hz" #doesn't work
             self.add_video_colorbars(phy=self.videophy, timings=timings, clock_domain="dvi")
             
@@ -183,6 +225,29 @@ class BaseSoC(SoCCore):
             self.leds = LedChaser(
                 pads         = platform.request("led", 0),
                 sys_clk_freq = sys_clk_freq)
+
+
+    def add_video_colorbars(self, name="video_colorbars", phy=None, timings="800x600@60Hz", clock_domain="sys"):
+        # Imports.
+        from litex.soc.cores.video import VideoTimingGenerator
+
+        # Video Timing Generator.
+        self.check_if_exists(f"{name}_vtg")
+        vtg = VideoTimingGenerator(default_video_timings=timings if isinstance(timings, str) else timings[1])
+        vtg = ClockDomainsRenamer(clock_domain)(vtg)
+        setattr(self, f"{name}_vtg", vtg)
+
+        # ColorsBars Pattern.
+        self.check_if_exists(name)
+        colorbars = ClockDomainsRenamer(clock_domain)(CustomPattern())
+        setattr(self, name, colorbars)
+
+        # Connect Video Timing Generator to ColorsBars Pattern.
+        self.comb += [
+            vtg.source.connect(colorbars.vtg_sink),
+            colorbars.source.connect(phy if isinstance(phy, stream.Endpoint) else phy.sink)
+        ]
+
 
 # Build --------------------------------------------------------------------------------------------
 
