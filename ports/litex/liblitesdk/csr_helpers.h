@@ -1,5 +1,8 @@
-// This file is Copyright (c) 2021 Victor Suarez Rovere <suarezvictor@gmail.com>
+// This file is Copyright (c) 2021-2023 Victor Suarez Rovere <suarezvictor@gmail.com>
 // License: BSD-2-Clause
+
+#ifndef __CSR_HELPERS_H
+#define __CSR_HELPERS_H
 
 #ifndef STATIC_ASSERT
 //TODO: move to a more general place
@@ -34,3 +37,4 @@ static inline csr1word_t litecsr_adjust_csr1(csr1word_t x) { return x; }
 
 #define LITEX_OFFSET_ASSERT(ph, t, f) LITEX_STATIC_ASSERT(offsetof(t, f) == ph ## _ ## f ## _ADDR - ph ## _BASE);
 
+#endif //__CSR_HELPERS_H

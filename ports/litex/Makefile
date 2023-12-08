@@ -102,7 +102,8 @@ SRC_C = \
 	lib/utils/interrupt_char.c \
 	lib/utils/pyexec.c \
 	lib/timeutils/timeutils.c \
-	lib/mp-readline/readline.c
+	lib/mp-readline/readline.c \
+	accel_cores.c
 
 #lib sources with no need of QSTR extraction
 SRC_LITEX = \

@@ -48,8 +48,10 @@ typedef long      mp_off_t;
 #define MICROPY_HW_SDRAM_BASE MAIN_RAM_BASE
 #define MICROPY_HW_SDRAM_SIZE MAIN_RAM_SIZE
 #endif
+
 #ifdef CSR_VIDEO_FRAMEBUFFER_BASE
 #define MICROPY_PY_FRAMEBUF (1)
+#define MICROPY_ENABLE_FRAMEBUFFER_ACCEL (1) //enable hardware accelerated cores from gpu2d project
 #endif
 
 #if defined(CSR_SPI_BASE) || defined (CSR_SPI0_BASE)
