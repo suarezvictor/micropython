@@ -182,7 +182,7 @@ STATIC void rgb565_fill_rect(const mp_obj_framebuf_t *fb, unsigned int x, unsign
 STATIC void rgb32_setpixel(const mp_obj_framebuf_t *fb, unsigned int x, unsigned int y, uint32_t col) {
 #ifdef MICROPY_ENABLE_FRAMEBUFFER_ACCEL
 #warning accelerator should check that target memory is within accesible video ram, or resort to software rendering
-    accel_rectangle_fill32(accel_rectangle_fill32_regs, (uintptr_t) fb->buf, x, y, x, y, col, fb->stride*sizeof(col));
+    accel_rectangle_fill32((uintptr_t) fb->buf, x, y, x, y, col, fb->stride*sizeof(col));
 #else
     ((uint32_t *)fb->buf)[x + y * fb->stride] = col;
 #endif
@@ -195,7 +195,7 @@ STATIC uint32_t rgb32_getpixel(const mp_obj_framebuf_t *fb, unsigned int x, unsi
 STATIC void rgb32_fill_rect(const mp_obj_framebuf_t *fb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, uint32_t col) {
 #ifdef MICROPY_ENABLE_FRAMEBUFFER_ACCEL
 #warning accelerator should check that target memory is within accesible video ram, or resort to software rendering
-    accel_rectangle_fill32(accel_rectangle_fill32_regs, (uintptr_t) fb->buf, x, y, x+w-1, y+h-1, col, fb->stride*sizeof(col));
+    accel_rectangle_fill32((uintptr_t) fb->buf, x, y, x+w-1, y+h-1, col, fb->stride*sizeof(col));
 #else
     uint32_t *b = &((uint32_t *)fb->buf)[x + y * fb->stride];
     while (h--) {
@@ -516,7 +516,7 @@ STATIC mp_obj_t framebuf_line(size_t n_args, const mp_obj_t *args) {
 #warning accelerator should check that target memory is within accesible video ram, or resort to software rendering
 
     uint32_t col = mp_obj_get_int(args[5]);
-    accel_line32(accel_line32_regs, (uintptr_t) self->buf, x1, y1, x2, y2, col, self->stride*sizeof(col));
+    accel_line32((uintptr_t) self->buf, x1, y1, x2, y2, col, self->stride*sizeof(col));
 
 #else
     mp_int_t col = mp_obj_get_int(args[5]);
@@ -616,7 +616,7 @@ STATIC mp_obj_t framebuf_ellipse(size_t n_args, const mp_obj_t *args_in) {
     uint32_t col = args[4];
     //printf("framebuf_ellipse: buf 0x%p, cx = %d, cy = %d, xr = %d, yr = %d, col = 0x%08lX\n", fb->buf, cx, cy, xr, yr, col);
 #warning accelerator should check that target memory is within accesible video ram, or resort to software rendering
-    accel_ellipse_fill32(accel_ellipse_fill32_regs, (uintptr_t) fb->buf, cx - xr, cy - yr, cx + xr, cy + yr, col, fb->stride*sizeof(col));
+    accel_ellipse_fill32((uintptr_t) fb->buf, cx - xr, cy - yr, cx + xr, cy + yr, col, fb->stride*sizeof(col));
 
     return mp_const_none;
 }
