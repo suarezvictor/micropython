@@ -865,7 +865,7 @@ bool fb_init(unsigned width, unsigned height, int format, debug_handle_t *handle
 
     switch(format)
     {
-        case FRAMEBUF_RGB32: texture_format = SDL_PIXELFORMAT_BGRA32; break;
+        case FRAMEBUF_RGB32: texture_format = SDL_PIXELFORMAT_RGBA32; break;
         case FRAMEBUF_RGB565: texture_format = SDL_PIXELFORMAT_RGB565; break;
         default:
             return false; //FIXME: raise error
