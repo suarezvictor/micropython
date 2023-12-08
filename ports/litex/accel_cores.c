@@ -4,8 +4,10 @@
 
 #include "accel_cores.h"
 
-int accel_rectangle_fill32(accel_rectangle_fill32_layout_t *regs, uintptr_t fb_base, int x0, int y0, int x1, int y1, uint32_t rgba, unsigned frame_pitch)
+int accel_rectangle_fill32(uintptr_t fb_base, int x0, int y0, int x1, int y1, uint32_t rgba, unsigned frame_pitch)
 {
+  accel_rectangle_fill32_layout_t *regs = accel_rectangle_fill32_regs;
+
 #ifndef ACCEL_RECTANGLE_FILL32_CSR_PAGE_OFFSET
 #error MICROPY_ENABLE_FRAMEBUFFER_ACCEL is defined but ACCEL_RECTANGLE_FILL32_CSR_PAGE_OFFSET is not defined
 #endif
@@ -34,8 +36,10 @@ int accel_rectangle_fill32(accel_rectangle_fill32_layout_t *regs, uintptr_t fb_b
   return 1; //executed
 }
 
-int accel_ellipse_fill32(accel_ellipse_fill32_layout_t *regs, uintptr_t fb_base, int x0, int y0, int x1, int y1, uint32_t rgba, unsigned frame_pitch)
+int accel_ellipse_fill32(uintptr_t fb_base, int x0, int y0, int x1, int y1, uint32_t rgba, unsigned frame_pitch)
 {
+  accel_ellipse_fill32_layout_t *regs = accel_ellipse_fill32_regs;
+
 #ifndef ACCEL_ELLIPSE_FILL32_CSR_PAGE_OFFSET
 #error MICROPY_ENABLE_FRAMEBUFFER_ACCEL is defined but ACCEL_ELLIPSE_FILL32_CSR_PAGE_OFFSET is not defined
 #endif
@@ -65,8 +69,10 @@ int accel_ellipse_fill32(accel_ellipse_fill32_layout_t *regs, uintptr_t fb_base,
   return 1; //executed
 }
 
-int accel_line32(accel_line32_layout_t *regs, uintptr_t fb_base, int x0, int y0, int x1, int y1, uint32_t rgba, unsigned frame_pitch)
+int accel_line32(uintptr_t fb_base, int x0, int y0, int x1, int y1, uint32_t rgba, unsigned frame_pitch)
 {
+  accel_line32_layout_t *regs = accel_line32_regs;
+
 #ifndef ACCEL_LINE32_CSR_PAGE_OFFSET
 #error MICROPY_ENABLE_FRAMEBUFFER_ACCEL is defined but ACCEL_LINE32_CSR_PAGE_OFFSET is not defined
 #endif
