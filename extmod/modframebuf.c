@@ -37,9 +37,12 @@
 
 #ifdef MICROPY_ENABLE_FRAMEBUFFER_ACCEL
 
+//FIXME: move to a new source
 #define ACCEL_STATIC_ASSERT(cond, msg) STATIC_ASSERT(cond, msg);
 #include <../../../accel_cores.h>
 
+//TODO: accelerator functions can return a boolean to indicate if it was run or not, and resort to software version if not
+//(i.e checking the target buffer is within allowable region)
 static void _rectangle_fill32(accel_rectangle_fill32_layout_t *regs, uintptr_t fb_base, int x0, int y0, int x1, int y1, uint32_t rgba, unsigned frame_pitch)
 {
 #ifndef ACCEL_RECTANGLE_FILL32_CSR_PAGE_OFFSET
@@ -91,6 +94,36 @@ static void _ellipse_fill32(accel_ellipse_fill32_layout_t *regs, uintptr_t fb_ba
   regs->base = fb_base;
   regs->xstride = VIDEO_FRAMEBUFFER_DEPTH/8;
   regs->ystride = frame_pitch;
+  regs->rgba = rgba;
+  
+  regs->run = 1; //start
+  while(!regs->done); //wait until done
+}
+
+static void _line32(accel_line32_layout_t *regs, uintptr_t fb_base, int x0, int y0, int x1, int y1, uint32_t rgba, unsigned frame_pitch)
+{
+#ifndef ACCEL_LINE32_CSR_PAGE_OFFSET
+#error MICROPY_ENABLE_FRAMEBUFFER_ACCEL is defined but ACCEL_LINE32_CSR_PAGE_OFFSET is not defined
+#endif
+
+#if defined(VRAM_ORIGIN_ACCEL_LINE32) && defined(VIDEO_FRAMEBUFFER_BASE) && VRAM_ORIGIN_ACCEL_LINE32 != VIDEO_FRAMEBUFFER_BASE
+#warning VRAM_ORIGIN_ACCEL_LINE32 should be tested
+  fb_base += VRAM_ORIGIN_ACCEL_LINE32 - VIDEO_FRAMEBUFFER_BASE;
+#endif
+
+  regs->run = 0; //stops
+  while(regs->done); //wait data latch
+
+  fb_base += y0*frame_pitch + x0*sizeof(rgba);
+  regs->x0 = x0;
+  regs->x1 = x1;
+  regs->y0 = y0;
+  regs->y1 = y1;
+
+  regs->base = fb_base;
+  regs->xstride = x0 < x1 ? VIDEO_FRAMEBUFFER_DEPTH/8 : -VIDEO_FRAMEBUFFER_DEPTH/8;
+  regs->ystride = y0 < y1 ? frame_pitch : -frame_pitch;
+
   regs->rgba = rgba;
   
   regs->run = 1; //start
@@ -244,6 +277,7 @@ STATIC void rgb565_fill_rect(const mp_obj_framebuf_t *fb, unsigned int x, unsign
 
 STATIC void rgb32_setpixel(const mp_obj_framebuf_t *fb, unsigned int x, unsigned int y, uint32_t col) {
 #ifdef MICROPY_ENABLE_FRAMEBUFFER_ACCEL
+#warning accelerator should check that target memory is within accesible video ram, or resort to software rendering
     _rectangle_fill32(accel_rectangle_fill32_regs, (uintptr_t) fb->buf, x, y, x, y, col, fb->stride*sizeof(col));
 #else
     ((uint32_t *)fb->buf)[x + y * fb->stride] = col;
@@ -570,11 +604,18 @@ STATIC mp_obj_t framebuf_line(size_t n_args, const mp_obj_t *args) {
     mp_int_t y1 = mp_obj_get_int(args[2]);
     mp_int_t x2 = mp_obj_get_int(args[3]);
     mp_int_t y2 = mp_obj_get_int(args[4]);
-    mp_int_t col = mp_obj_get_int(args[5]);
 
 #ifdef MICROPY_ENABLE_FRAMEBUFFER_ACCEL
-#warning MICROPY_ENABLE_FRAMEBUFFER_ACCEL but no line implementation //FIXME: call line accelerator
+    if(self->format != FRAMEBUF_RGB32)
+      mp_raise_ValueError(MP_ERROR_TEXT("Accelerated line requires 32-bit color"));
+
+#warning accelerator should check that target memory is within accesible video ram, or resort to software rendering
+
+    uint32_t col = mp_obj_get_int(args[5]);
+    _line32(accel_line32_regs, (uintptr_t) self->buf, x1, y1, x2, y2, col, self->stride*sizeof(col));
+
 #else
+    mp_int_t col = mp_obj_get_int(args[5]);
     mp_int_t dx = x2 - x1;
     mp_int_t sx;
     if (dx > 0) {
@@ -670,6 +711,7 @@ STATIC mp_obj_t framebuf_ellipse(size_t n_args, const mp_obj_t *args_in) {
     mp_int_t cx = args[0], cy = args[1], xr = args[2], yr = args[3];
     uint32_t col = args[4];
     //printf("framebuf_ellipse: buf 0x%p, cx = %d, cy = %d, xr = %d, yr = %d, col = 0x%08lX\n", fb->buf, cx, cy, xr, yr, col);
+#warning accelerator should check that target memory is within accesible video ram, or resort to software rendering
     _ellipse_fill32(accel_ellipse_fill32_regs, (uintptr_t) fb->buf, cx - xr, cy - yr, cx + xr, cy + yr, col, fb->stride*sizeof(col));
 
     return mp_const_none;
