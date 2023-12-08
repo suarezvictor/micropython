@@ -62,7 +62,7 @@ CFLAGS += $(INC) -Wall -Wno-error -std=gnu11 -ggdb $(COPT)
 CFLAGS += -Og -Wdouble-promotion
 
 # Set Include directories.
-INC += -I. -I../../../Libs/
+INC += -I.
 INC += -I$(BUILD)
 INC += -I$(TOP)
 INC += -I$(BUILD_DIRECTORY)/software/include
