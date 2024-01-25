@@ -27,6 +27,9 @@
  *
  */
 
+/* Copyright (c) 2020 SiFive Inc. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
 OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv", "elf64-littleriscv")
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
@@ -55,40 +58,40 @@ SECTIONS
 	} > ram
 	PROVIDE(__spl_size = __spl_end - __spl_start);
 
-	.initcall ALIGN(8) :
-	{
-		PROVIDE(__init_array_start = .);
-		PROVIDE(__initcall_start = .);
-		KEEP(*(.initcall_0.text))
-		KEEP(*(.initcall_1.text))
-		KEEP(*(.initcall_2.text))
-		KEEP(*(.initcall_3.text))
-		KEEP(*(.initcall_4.text))
-		KEEP(*(.initcall_5.text))
-		KEEP(*(.initcall_6.text))
-		KEEP(*(.initcall_7.text))
-		KEEP(*(.initcall_8.text))
-		KEEP(*(.initcall_9.text))
-		PROVIDE(__init_array_end = .);
-		PROVIDE(__initcall_end = .);
-	} > ram
+    /* Include the list of initialization functions sorted. */
+    .init_array ALIGN(8) :
+    {
+        PROVIDE_HIDDEN (_init_array_start = .);
+        KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
+        KEEP (*(.init_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .ctors))
+        PROVIDE_HIDDEN (_init_array_end = .);        
+    } > ram
 
-	.exitcall ALIGN(8) :
-	{
-		PROVIDE(__exitcall_start = .);
-		KEEP(*(.exitcall_9.text))
-		KEEP(*(.exitcall_8.text))
-		KEEP(*(.exitcall_7.text))
-		KEEP(*(.exitcall_6.text))
-		KEEP(*(.exitcall_5.text))
-		KEEP(*(.exitcall_4.text))
-		KEEP(*(.exitcall_3.text))
-		KEEP(*(.exitcall_2.text))
-		KEEP(*(.exitcall_1.text))
-		KEEP(*(.exitcall_0.text))
-		PROVIDE(__exitcall_end = .);
-	} > ram
+    /* Include the list of termination functions sorted. */
+    .fini_array ALIGN(8) :
+    {
+        PROVIDE_HIDDEN (_fini_array_start = .);
+        KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))
+        KEEP (*(.fini_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .dtors))
+        PROVIDE_HIDDEN (_fini_array_end = .);
+    } > ram
 
+    .ctors : {
+        KEEP (*crtbegin.o(.ctors))
+        KEEP (*crtbegin?.o(.ctors))
+        KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .ctors))
+        KEEP (*(SORT(.ctors.*)))
+        KEEP (*(.ctors))
+    } >ram
+
+    .dtors : {
+        KEEP (*crtbegin.o(.dtors))
+        KEEP (*crtbegin?.o(.dtors))
+        KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .dtors))
+        KEEP (*(SORT(.dtors.*)))
+        KEEP (*(.dtors))
+    } >ram
+    
 	.ksymtab ALIGN(16) :
 	{
 		PROVIDE(__ksymtab_start = .);

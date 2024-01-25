@@ -6,7 +6,7 @@
 
 // Python internal features.
 #define MICROPY_ENABLE_COMPILER     (1)
-#define MICROPY_ENABLE_GC           (0)
+#define MICROPY_ENABLE_GC           (1)
 
 #define MICROPY_HELPER_REPL         (1)
 #define MICROPY_ERROR_REPORTING     (MICROPY_ERROR_REPORTING_TERSE)
@@ -28,7 +28,7 @@
 #define MICROPY_PY_MACHINE_I2C              (0)
 #define MICROPY_PY_UTIME_MP_HAL             (1)
 #if !MICROPY_ENABLE_SCHEDULER
-#define MICROPY_ENABLE_SCHEDULER                (1)
+#define MICROPY_ENABLE_SCHEDULER                (0)
 #endif
 
 // Type definitions for the specific machine
@@ -38,10 +38,9 @@ typedef uintptr_t mp_uint_t;
 typedef long      mp_off_t;
 
 
-#define MICROPY_PY_FRAMEBUF (1)
+#define MICROPY_PY_FRAMEBUF (0)
 #define MICROPY_VFS_FAT (0)
 
-#define MICROPY_PY_SYS_PLATFORM "F133"
 
 #define mp_hal_delay_us(us) delay_us(us)
 

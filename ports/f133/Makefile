@@ -19,10 +19,11 @@ MACH_DIRECTORY := /media/vsuarez/elocaldata/SCRATCH/gpu2d-notabug.org/target-cpu
 # Set ASFLAGS / CFLAGS.
 DEFINES		+=	-D__RISCV64__
 
-ASFLAGS		+=	-std=gnu99 $(DEFINES) # -ffunction-sections -fdata-sections -ffreestanding 
-CFLAGS		+=	-std=gnu99 $(DEFINES) # -ffunction-sections -fdata-sections -ffreestanding
-CPPFLAGS	+=	 $(DEFINES) # -ffunction-sections -fdata-sections -ffreestanding
-#LDFLAGS		+=	-Wl,-gc-sections
+ASFLAGS		+=	-std=gnu99 $(DEFINES) -ffunction-sections -fdata-sections -ffreestanding 
+CFLAGS		+=	-std=gnu99 $(DEFINES) -ffunction-sections -fdata-sections -ffreestanding
+CPPFLAGS	+=	 $(DEFINES) -ffunction-sections -fdata-sections -ffreestanding
+LDFLAGS		+=	-Wl,-gc-sections
+
 
 CFLAGS += $(CPUFLAGS)
 #CFLAGS += $(INC) -Wall -Werror -std=gnu11 -ggdb $(COPT)
@@ -48,7 +49,6 @@ SRC_C = \
 	modmachine.c \
 	modutime.c \
 	modf133.c \
-	lib/utils/sys_stdio_mphal.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/interrupt_char.c \
 	lib/utils/pyexec.c \

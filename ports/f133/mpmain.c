@@ -17,40 +17,14 @@
 #include "mphalport.h"
 
 
-void mp_keyboard_interrupt()
-{
-    MP_STATE_VM(mp_kbd_exception) = (MP_STATE_PORT(mp_kbd_exception));
-}
-
-#if MICROPY_ENABLE_COMPILER
-void do_str(const char *src, mp_parse_input_kind_t input_kind) {
-    nlr_buf_t nlr;
-    if (nlr_push(&nlr) == 0) {
-        mp_lexer_t *lex = mp_lexer_new_from_str_len(MP_QSTR__lt_stdin_gt_, src, strlen(src), 0);
-        qstr source_name = lex->source_name;
-        mp_parse_tree_t parse_tree = mp_parse(lex, input_kind);
-        mp_obj_t module_fun = mp_compile(&parse_tree, source_name, true);
-        mp_call_function_0(module_fun);
-        nlr_pop();
-    } else {
-        // uncaught exception
-        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
-    }
-}
-#endif
-
-extern char _end, _emain_ram;
-
-
 static char *stack_top;
 int upython_main(int argc, char **argv, char *stack_top_arg)
 {
     stack_top = stack_top_arg;
     {
-#if MICROPY_ENABLE_GC
+#ifdef VIDEO_FRAMEBUFFER_BASE
         void *heap_start = &_end, *heap_end = &_emain_ram; //TODO: move this logic to the C SDK
 
-        #ifdef VIDEO_FRAMEBUFFER_BASE
         #warning A ram region for the video framebuffer should be allocated in linker scripts
         void *video_base = (void *) VIDEO_FRAMEBUFFER_BASE; //TODO: move framebuffer logic to the C SDK
         if(heap_start <= video_base && heap_end > video_base) //check if framebuffer overlaps
@@ -59,7 +33,6 @@ int upython_main(int argc, char **argv, char *stack_top_arg)
             //it's better instead to use the RAM after the framebuffer up to the end of the SDRAM
             heap_start = ((char *)video_base) + (VIDEO_FRAMEBUFFER_HRES*VIDEO_FRAMEBUFFER_VRES*VIDEO_FRAMEBUFFER_DEPTH/8)*4; //supports 4 framebuffers
         }
-        #endif
 
 
         #ifdef _DEBUG        
@@ -67,8 +40,9 @@ int upython_main(int argc, char **argv, char *stack_top_arg)
         #endif
         gc_init(heap_start, heap_end);
 #else
-        //static uint8_t heap[4096];
-        //gc_init(heap, heap + sizeof(heap));
+        static uint8_t heap[4096];
+        gc_init(heap, heap + sizeof(heap));
+        {char msg[]="DEBUG 0...\r\n"; mp_hal_stdout_tx_strn(msg, sizeof(msg)-1); }
 #endif
     }
 
@@ -141,8 +115,7 @@ void gc_collect(void) {
 void start_micropython(int argc, char **argv)
 {
 	int dummy; //it doesn't matter what references since only address is taken
-    while(upython_main(argc, argv, (char*)&dummy) == 0)
-        /*soft_reset()*/;
+    upython_main(argc, argv, (char*)&dummy);
 }
 
 #if !MICROPY_READER_VFS
