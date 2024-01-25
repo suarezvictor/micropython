@@ -42,7 +42,6 @@ int upython_main(int argc, char **argv, char *stack_top_arg)
 #else
         static uint8_t heap[4096];
         gc_init(heap, heap + sizeof(heap));
-        {char msg[]="DEBUG 0...\r\n"; mp_hal_stdout_tx_strn(msg, sizeof(msg)-1); }
 #endif
     }
 
@@ -115,7 +114,8 @@ void gc_collect(void) {
 void start_micropython(int argc, char **argv)
 {
 	int dummy; //it doesn't matter what references since only address is taken
-    upython_main(argc, argv, (char*)&dummy);
+    if(upython_main(argc, argv, (char*)&dummy) == -1)
+      /*do_hard_reset()*/;
 }
 
 #if !MICROPY_READER_VFS

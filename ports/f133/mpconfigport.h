@@ -28,7 +28,7 @@
 #define MICROPY_PY_MACHINE_I2C              (0)
 #define MICROPY_PY_UTIME_MP_HAL             (1)
 #if !MICROPY_ENABLE_SCHEDULER
-#define MICROPY_ENABLE_SCHEDULER                (0)
+#define MICROPY_ENABLE_SCHEDULER                (1)
 #endif
 
 // Type definitions for the specific machine

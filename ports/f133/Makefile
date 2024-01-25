@@ -36,8 +36,8 @@ INC += -I$(BUILD)
 INC += -I$(MACH_DIRECTORY)
 LINKER_FILE = linker.ld
 
-# Set LDFLAGS.
-LDFLAGS += -nostartfiles -T $(LINKER_FILE) -Wl,-Map=$@.map -Wl,--cref
+# Set LDFLAGS. NOTE: **** lack of -static makes the project hangs ****
+LDFLAGS += -nostartfiles -static -T $(LINKER_FILE) -Wl,-Map=$@.map -Wl,--cref
 
 # Set Libraries.
 LIBS = -Wl,-lm
@@ -45,12 +45,12 @@ LIBS = -Wl,-lm
 # Set Sources.
 SRC_C = \
 	main.c \
+	startup.c \
 	mpmain.c \
 	modmachine.c \
 	modutime.c \
 	modf133.c \
 	lib/utils/stdout_helpers.c \
-	lib/utils/interrupt_char.c \
 	lib/utils/pyexec.c \
 	lib/timeutils/timeutils.c \
 	lib/mp-readline/readline.c
