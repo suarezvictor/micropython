@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 #include "py/mphal.h"
 #include "py/compile.h"
@@ -28,7 +29,8 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-//custom printf (missing in libs/utils/printf.c)
+#if MICROPY_USE_INTERNAL_PRINTF
+//It's missing in libs/utils/printf.c, a hack to be able to replace it with a float capable one
 int printf(const char *fmt, ...)
 {
     va_list ap;
@@ -37,4 +39,4 @@ int printf(const char *fmt, ...)
     va_end(ap);
     return ret;
 }
-
+#endif

@@ -20,6 +20,7 @@
 #define MICROPY_PY_MACHINE          (1)
 #define MICROPY_KBD_EXCEPTION       (1)
 #define MICROPY_PY_BUILTINS_MEMORYVIEW (1)
+#define MICROPY_USE_INTERNAL_PRINTF (1)
 
 // extended modules
 #define MICROPY_PY_MACHINE_SPI              (0)
