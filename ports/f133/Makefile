@@ -50,6 +50,7 @@ SRC_C = \
 	modmachine.c \
 	modutime.c \
 	modf133.c \
+	f133_video.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/pyexec.c \
 	lib/timeutils/timeutils.c \

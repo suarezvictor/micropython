@@ -3,4 +3,5 @@
 
 #include "sys.c"
 #include "driver_uart.c"
+#include "driver_framebuffer.c"
 

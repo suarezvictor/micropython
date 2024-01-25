@@ -39,7 +39,7 @@ typedef uintptr_t mp_uint_t;
 typedef long      mp_off_t;
 
 
-#define MICROPY_PY_FRAMEBUF (0)
+#define MICROPY_PY_FRAMEBUF (1)
 #define MICROPY_VFS_FAT (0)
 
 

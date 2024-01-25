@@ -4,14 +4,13 @@
 
 #include "py/obj.h"
 
-extern const mp_obj_type_t f133_led_type;
-extern const mp_obj_type_t f133_dmawriter_type;
-extern const mp_obj_type_t f133_dmareader_type;
 extern const mp_obj_type_t f133_video_type;
-extern const mp_obj_type_t f133_usbhmi_type;
 
 STATIC const mp_rom_map_elem_t f133_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_f133) },
+#ifdef MICROPY_PY_FRAMEBUF
+    { MP_ROM_QSTR(MP_QSTR_Video), MP_ROM_PTR(&f133_video_type) },
+#endif
 };
 
 STATIC MP_DEFINE_CONST_DICT(f133_module_globals, f133_module_globals_table);
