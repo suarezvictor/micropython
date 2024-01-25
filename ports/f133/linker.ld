@@ -38,7 +38,7 @@ STACK_SIZE = 0x100000;
 
 MEMORY
 {
-	ram  : org = 0x40000000, len = 48M
+	ram  : org = 0x40000000, len = 64M
 }
 
 SECTIONS
@@ -134,6 +134,13 @@ SECTIONS
 		. += STACK_SIZE;
 		. = ALIGN(16);
 		PROVIDE(__stack_end = .);
+	} > ram
+	
+	.heap ALIGN(16) (NOLOAD) :
+	{
+		PROVIDE(__heap_start = .);
+		. = ORIGIN(ram) + LENGTH(ram);
+		PROVIDE(__heap_end = .);
 	} > ram
 
 	/DISCARD/ : { *(.dynsym) }

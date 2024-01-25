@@ -18,27 +18,23 @@
 
 
 static char *stack_top;
+extern uint8_t __image_start[], __heap_start[], __heap_end[];
+extern uintptr_t framebuffer_address;
+
 int upython_main(int argc, char **argv, char *stack_top_arg)
 {
     stack_top = stack_top_arg;
     {
-#ifdef VIDEO_FRAMEBUFFER_BASE
-        void *heap_start = &_end, *heap_end = &_emain_ram; //TODO: move this logic to the C SDK
-
-        #warning A ram region for the video framebuffer should be allocated in linker scripts
-        void *video_base = (void *) VIDEO_FRAMEBUFFER_BASE; //TODO: move framebuffer logic to the C SDK
-        if(heap_start <= video_base && heap_end > video_base) //check if framebuffer overlaps
-        {
-            //heap_end = video_base; //WARNING: this will collide with malloc, since based on sbrk that used linker script's _end
-            //it's better instead to use the RAM after the framebuffer up to the end of the SDRAM
-            heap_start = ((char *)video_base) + (VIDEO_FRAMEBUFFER_HRES*VIDEO_FRAMEBUFFER_VRES*VIDEO_FRAMEBUFFER_DEPTH/8)*4; //supports 4 framebuffers
-        }
-
-
-        #ifdef _DEBUG        
-        printf("RAM base at 0x%p, heap at 0x%p, end=0x%p (%d KiB)\n", (void *)MICROPY_HW_SDRAM_BASE, heap_start, heap_end, ((char*)heap_end-(char*)heap_start)/1024);
-        #endif
+#ifdef MICROPY_PY_FRAMEBUF
+        uint8_t *heap_start = __heap_start, *heap_end = __heap_end;
+        framebuffer_address = (uintptr_t) heap_start;
+        heap_start += 16*1024*1024; //allocate enough space for FullHD double buffer
         gc_init(heap_start, heap_end);
+
+#ifdef _DEBUG
+        printf("RAM base at 0x%p, framebuffer at 0x%p, heap at 0x%p, end=0x%p (%ld KiB)\n",
+            &__image_start, (void*) framebuffer_address, heap_start, heap_end, (heap_end-heap_start)/1024);
+#endif
 #else
         static uint8_t heap[4096];
         gc_init(heap, heap + sizeof(heap));
