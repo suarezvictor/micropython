@@ -11,7 +11,7 @@
 
 __attribute__((constructor)) void foo(void)
 {
-  mp_hal_stdout_tx_str("Starting F133 platform\r\n");
+  printf("Starting F133 platform\n");
 }
 
 
@@ -26,5 +26,15 @@ int main(int argc, char *argv[])
   start_micropython(argc, argv);
 
   return 0;
+}
+
+//custom printf (missing in libs/utils/printf.c)
+int printf(const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    int ret = mp_vprintf(&mp_plat_print, fmt, ap);
+    va_end(ap);
+    return ret;
 }
 

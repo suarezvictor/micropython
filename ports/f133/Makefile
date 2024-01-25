@@ -19,9 +19,9 @@ MACH_DIRECTORY := /media/vsuarez/elocaldata/SCRATCH/gpu2d-notabug.org/target-cpu
 # Set ASFLAGS / CFLAGS.
 DEFINES		+=	-D__RISCV64__
 
-ASFLAGS		+=	-std=gnu99 $(DEFINES) -ffunction-sections -fdata-sections -ffreestanding 
-CFLAGS		+=	-std=gnu99 $(DEFINES) -ffunction-sections -fdata-sections -ffreestanding
-CPPFLAGS	+=	 $(DEFINES) -ffunction-sections -fdata-sections -ffreestanding
+ASFLAGS		+=	-std=gnu99 $(DEFINES) -ffunction-sections -fdata-sections #-ffreestanding 
+CFLAGS		+=	-std=gnu99 $(DEFINES) -ffunction-sections -fdata-sections #-ffreestanding
+CPPFLAGS	+=	 $(DEFINES) -ffunction-sections -fdata-sections #-ffreestanding
 LDFLAGS		+=	-Wl,-gc-sections
 
 
