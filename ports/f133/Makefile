@@ -61,7 +61,7 @@ SRC_MACH = mach-f133.c
 
 
 DRIVERS_SRC_C = # $(addprefix drivers/, bus/softspi.c)
-EXTMOD_SRC_C = # $(addprefix extmod/,	machine_spi.c machine_i2c.c)
+EXTMOD_SRC_C = $(addprefix extmod/, machine_i2c.c)
 
 CRT0_S = crt0.S
 CRT0_O = $(BUILD)/crt0.o

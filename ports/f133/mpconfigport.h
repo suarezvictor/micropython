@@ -26,7 +26,7 @@
 #define MICROPY_PY_MACHINE_SPI              (0)
 #define MICROPY_PY_MACHINE_SPI_MSB          (0)
 #define MICROPY_PY_MACHINE_SPI_LSB          (0)
-#define MICROPY_PY_MACHINE_I2C              (0)
+#define MICROPY_PY_MACHINE_I2C              (1)
 #define MICROPY_PY_UTIME_MP_HAL             (1)
 #if !MICROPY_ENABLE_SCHEDULER
 #define MICROPY_ENABLE_SCHEDULER                (1)
