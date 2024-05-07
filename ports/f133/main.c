@@ -12,13 +12,13 @@
 
 __attribute__((constructor)) void foo(void)
 {
-  printf("Starting F133 platform\n");
+  //printf("Starting F133 platform\n");
 }
 
 
 int main(int argc, char *argv[])
 {
-  //UART is initialized in the startup assembly
+  uart_probe(UART_COMM); //DEBUG UART is already initialized in the startup assembly
 
   void _init(void);
   _init(); //call init functions, include above one
