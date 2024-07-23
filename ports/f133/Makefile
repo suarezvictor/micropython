@@ -19,22 +19,23 @@ MACH_DIRECTORY := /media/vsuarez/elocaldata/SCRATCH/gpu2d-notabug.org/target-cpu
 # Set ASFLAGS / CFLAGS.
 DEFINES		+=	-D__RISCV64__
 
-ASFLAGS		+=	-std=gnu99 $(DEFINES) -ffunction-sections -fdata-sections #-ffreestanding 
-CFLAGS		+=	-std=gnu99 $(DEFINES) -ffunction-sections -fdata-sections #-ffreestanding
-CPPFLAGS	+=	 $(DEFINES) -ffunction-sections -fdata-sections #-ffreestanding
-LDFLAGS		+=	-Wl,-gc-sections
 
+# Set Include directories.
+INC += -I. -I../..
+INC += -I$(BUILD)
+INC += -I$(MACH_DIRECTORY)
+INC += -I/media/vsuarez/elocaldata/SCRATCH/agg-2.6/agg-src/include
+LINKER_FILE = linker.ld
 
 CFLAGS += $(CPUFLAGS)
 #CFLAGS += $(INC) -Wall -Werror -std=gnu11 -ggdb $(COPT)
 CFLAGS += $(INC) -Wall -Wno-error -std=gnu11 $(COPT)
 CFLAGS += -Og -Wdouble-promotion
 
-# Set Include directories.
-INC += -I. -I../..
-INC += -I$(BUILD)
-INC += -I$(MACH_DIRECTORY)
-LINKER_FILE = linker.ld
+ASFLAGS		+=	-std=gnu99 $(DEFINES) -ffunction-sections -fdata-sections #-ffreestanding 
+CFLAGS		+=	-std=gnu99 $(DEFINES) -ffunction-sections -fdata-sections #-ffreestanding
+CXXFLAGS	+=	$(INC) $(DEFINES) -ffunction-sections -fdata-sections #-ffreestanding
+LDFLAGS		+=	-Wl,-gc-sections
 
 # Set LDFLAGS. NOTE: **** lack of -static makes the project hangs ****
 LDFLAGS += -nostartfiles -static -T $(LINKER_FILE) -Wl,-Map=$@.map -Wl,--cref
@@ -62,6 +63,7 @@ SRC_MACH = mach-f133.c
 
 DRIVERS_SRC_C = # $(addprefix drivers/, bus/softspi.c)
 EXTMOD_SRC_C = $(addprefix extmod/, machine_i2c.c)
+SRC_CPP = crt.cpp agg.cpp
 
 CRT0_S = crt0.S
 CRT0_O = $(BUILD)/crt0.o
@@ -71,6 +73,8 @@ OBJ =  $(CRT0_O) $(addprefix $(BUILD)/, $(SRC_S:.S=.o)) $(PY_O) $(addprefix $(BU
 OBJ += $(addprefix $(BUILD)/, $(DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_MACH:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_CPP:.cpp=.o))
+
 
 #$(info $$OBJ is: ${OBJ})
 
@@ -89,7 +93,7 @@ $(CRT0_O): $(CRT0_S) $(LINKER_FILE)
 
 $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(Q)$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf

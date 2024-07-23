@@ -20,6 +20,16 @@
 static char *stack_top;
 extern uint8_t __image_start[], __heap_start[], __heap_end[];
 extern uintptr_t framebuffer_address;
+extern unsigned framebuffer_pitch;
+
+static void debug_point(void)
+{
+  for(;;)
+  {
+    static uint8_t x = 0;
+    memset((void *) framebuffer_address, 0x80 | x++, framebuffer_pitch/2);
+  }
+}
 
 int upython_main(int argc, char **argv, char *stack_top_arg)
 {
@@ -30,6 +40,13 @@ int upython_main(int argc, char **argv, char *stack_top_arg)
         framebuffer_address = (uintptr_t) heap_start;
         heap_start += 16*1024*1024; //allocate enough space for FullHD double buffer
         gc_init(heap_start, heap_end);
+
+        //VIDEO TEST
+        void fb_probe(void); //sets framebuffer_pitch
+        fb_probe();
+        int agg_demo(void);
+        agg_demo();
+        //debug_point();
 
 #ifdef _DEBUG
         printf("RAM base at 0x%p, framebuffer at 0x%p, heap at 0x%p, end=0x%p (%ld KiB)\n",
