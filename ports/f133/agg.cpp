@@ -83,11 +83,41 @@ extern "C" int agg_demo(void)
 #include <../src/agg_arc.cpp>
 #else
 
+/*
+#python example
+
+import celiagg as agg
+import numpy as np
+from PIL import Image
+
+state = agg.GraphicsState(drawing_mode=agg.DrawingMode.DrawStroke,
+                          line_width=10.0)
+transform = agg.Transform()
+red_paint = agg.SolidPaint(1.0, 0.0, 0.0)
+orange_paint = agg.SolidPaint(0.99, 0.66, 0.0)
+
+canvas = agg.CanvasRGB24(np.zeros((400, 400, 3), dtype=np.uint8))
+
+path = agg.Path()
+path.ellipse(200, 200, 190, 190)
+canvas.clear(1.0, 1.0, 1.0)
+canvas.draw_shape(path, transform, state, stroke=red_paint)
+
+font = agg.Font(agg.example_font(), 96.0)
+transform.translate(30.0, 220.0)
+canvas.draw_text("celiagg", font, transform, state, fill=orange_paint)
+
+image = Image.fromarray(canvas.array, "RGB")
+image.save("example.png")
+
+*/
+
 #include <../../../celiagg/canvas_impl.cpp>
 #include <../../../celiagg/image.cpp>
 #include <../../../celiagg/font.cpp>
 #include <../../../celiagg/font_cache.cpp>
 #include <../../../celiagg/paint.cpp>
+#include <../../../celiagg/vertex_source.cpp>
 
 extern "C" int agg_demo(void)
 {
@@ -97,9 +127,25 @@ extern "C" int agg_demo(void)
   int stride=640*4;
   bool bottom_up=false;
   memset(buf, 0, height*stride);
+  
+  
+  auto state = GraphicsState();
+  state.drawing_mode(GraphicsState::DrawStroke);
+  state.line_width(10.0);
+  
+  auto transform = agg::trans_affine();
+  auto orange_paint = Paint(0.99, 0.66, 0.0, 1.0);
+  auto red_paint = Paint(1.0, 0.0, 0.0, 1.0);
+  
+  PathSource *path = new PathSource();
+  path->ellipse(200, 200, 190, 190);
+
   canvas_base *canvas = new canvas_rgba32_t(buf, width, height, stride, 4, cache, bottom_up);
   canvas->clear(0.5, 0.25, 1.0, 1.0);
+  canvas->draw_shape(*path, transform, orange_paint, red_paint, state);
+
   delete canvas;
+  delete path;
   return 0;
 }
 
