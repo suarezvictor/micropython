@@ -24,7 +24,8 @@ DEFINES		+=	-D__RISCV64__
 INC += -I. -I../..
 INC += -I$(BUILD)
 INC += -I$(MACH_DIRECTORY)
-INC += -I/media/vsuarez/elocaldata/SCRATCH/agg-2.6/agg-src/include
+#INC += -I/media/vsuarez/elocaldata/SCRATCH/agg-2.6/agg-src/include
+INC += -I/media/vsuarez/elocaldata/SCRATCH/gpu2d/celiagg/agg-svn/agg-2.4/include/
 LINKER_FILE = linker.ld
 
 CFLAGS += $(CPUFLAGS)

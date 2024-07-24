@@ -24,12 +24,9 @@
  #include <stdio.h>
  #include <stdint.h>
 
-/*
- #include "path.h"
- #include "writepng.h"
- */
-
 extern uintptr_t framebuffer_address;
+
+#if 0
 extern "C" int agg_demo(void)
 {
 
@@ -84,3 +81,64 @@ extern "C" int agg_demo(void)
 
 #include <../src/agg_rounded_rect.cpp>
 #include <../src/agg_arc.cpp>
+#else
+
+#include <../../../celiagg/canvas_impl.cpp>
+#include <../../../celiagg/image.cpp>
+#include <../../../celiagg/font.cpp>
+#include <../../../celiagg/font_cache.cpp>
+#include <../../../celiagg/paint.cpp>
+
+extern "C" int agg_demo(void)
+{
+  static FontCache cache;
+  unsigned char *buf = (unsigned char *) framebuffer_address;
+  unsigned width=640-1 /*leave a black pixel at right*/, height=480;
+  int stride=640*4;
+  bool bottom_up=false;
+  memset(buf, 0, height*stride);
+  canvas_base *canvas = new canvas_rgba32_t(buf, width, height, stride, 4, cache, bottom_up);
+  canvas->clear(0.5, 0.25, 1.0, 1.0);
+  delete canvas;
+  return 0;
+}
+
+// celiaag dependencies:
+#include <../src/agg_arc.cpp>
+#include <../src/agg_arrowhead.cpp>
+#include <../src/agg_bezier_arc.cpp>
+#include <../src/agg_bspline.cpp>
+#include <../src/agg_curves.cpp>
+#include <../src/agg_vcgen_contour.cpp>
+#include <../src/agg_vcgen_dash.cpp>
+#include <../src/agg_vcgen_markers_term.cpp>
+#include <../src/agg_vcgen_smooth_poly1.cpp>
+#include <../src/agg_vcgen_stroke.cpp>
+#include <../src/agg_vcgen_bspline.cpp>
+#include <../src/agg_gsv_text.cpp>
+#include <../src/agg_image_filters.cpp>
+#include <../src/agg_line_aa_basics.cpp>
+#include <../src/agg_line_profile_aa.cpp>
+#include <../src/agg_rounded_rect.cpp>
+#include <../src/agg_sqrt_tables.cpp>
+#include <../src/agg_embedded_raster_fonts.cpp>
+#include <../src/agg_trans_affine.cpp>
+#include <../src/agg_trans_warp_magnifier.cpp>
+#include <../src/agg_trans_single_path.cpp>
+#include <../src/agg_trans_double_path.cpp>
+#include <../src/agg_vpgen_clip_polygon.cpp>
+#include <../src/agg_vpgen_clip_polyline.cpp>
+#include <../src/agg_vpgen_segmentator.cpp>
+#include <../src/ctrl/agg_cbox_ctrl.cpp>
+#include <../src/ctrl/agg_gamma_ctrl.cpp>
+#include <../src/ctrl/agg_gamma_spline.cpp>
+#include <../src/ctrl/agg_rbox_ctrl.cpp>
+#include <../src/ctrl/agg_slider_ctrl.cpp>
+#include <../src/ctrl/agg_spline_ctrl.cpp>
+#include <../src/ctrl/agg_scale_ctrl.cpp>
+#include <../src/ctrl/agg_polygon_ctrl.cpp>
+#include <../src/ctrl/agg_bezier_ctrl.cpp>
+//optional gpc/gpc.c
+
+
+#endif
