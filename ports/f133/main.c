@@ -20,11 +20,14 @@ int main(int argc, char *argv[])
 {
   uart_probe(UART_COMM); //DEBUG UART is already initialized in the startup assembly
 
-  void _init(void);
-  //_init(); //call init functions, include above one. FIXME: it hangs!!
+  void _init_init(void);
+  _init_init();
 
   void start_micropython(int argc, char **argv);
   start_micropython(argc, argv);
+
+  void _fini_fini(void);
+  _fini_fini();
 
   return 0;
 }

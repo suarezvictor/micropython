@@ -62,8 +62,9 @@ SECTIONS
     .init_array ALIGN(8) :
     {
         PROVIDE_HIDDEN (_init_array_start = .);
+        KEEP (*.init_array)
         KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
-        KEEP (*(.init_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .ctors))
+        KEEP (*(EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .ctors))
         PROVIDE_HIDDEN (_init_array_end = .);        
     } > ram
 
@@ -71,8 +72,9 @@ SECTIONS
     .fini_array ALIGN(8) :
     {
         PROVIDE_HIDDEN (_fini_array_start = .);
-        KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))
-        KEEP (*(.fini_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .dtors))
+        KEEP (*(EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .dtors))
+        KEEP (*(SORT_BY_INIT_PRIORITY(.dtors.*) SORT_BY_INIT_PRIORITY(.fini_array.*)))
+        KEEP(*.fini_array)
         PROVIDE_HIDDEN (_fini_array_end = .);
     } > ram
 

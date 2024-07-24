@@ -46,7 +46,7 @@ int upython_main(int argc, char **argv, char *stack_top_arg)
         fb_probe();
         int agg_demo(void);
         agg_demo();
-        //debug_point();
+        debug_point();
 
 #ifdef _DEBUG
         printf("RAM base at 0x%p, framebuffer at 0x%p, heap at 0x%p, end=0x%p (%ld KiB)\n",
