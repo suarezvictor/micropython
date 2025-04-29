@@ -18,7 +18,7 @@ __attribute__((constructor)) void foo(void)
 
 int main(int argc, char *argv[])
 {
-  //UART is initialized in the startup assembly
+  uart_probe(UART_COMM); //init 2nd UART
 
   void _init(void);
   _init(); //call init functions, include above one
