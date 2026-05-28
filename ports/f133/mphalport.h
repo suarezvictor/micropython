@@ -66,6 +66,15 @@ static void mp_hal_pin_od_write(mp_hal_pin_obj_t p, int v)
   //FIXME: use mp_hal_pin_input / mp_hal_pin_output
   switch(p) //only support some pins for I2C
   {
+    case 0: //pins 0-7 uses GPIO_pe_cfg0
+      io_write32(GPIO_pe_cfg0, (io_read32(GPIO_pe_cfg0) & ~GPIO_pe_cfg0_pe0_select)
+        | ((v ? 0b0000 : 0b0001) << GPIO_pe_cfg0_pe0_select_SHIFT)); //0000:Input=High 0001:Output=Low
+      break;
+    case 1: //pins 0-7 uses GPIO_pe_cfg0
+      io_write32(GPIO_pe_cfg0, (io_read32(GPIO_pe_cfg0) & ~GPIO_pe_cfg0_pe1_select)
+        | ((v ? 0b0000 : 0b0001) << GPIO_pe_cfg0_pe1_select_SHIFT)); //0000:Input=High 0001:Output=Low
+      break;
+      
     case 12: //pins 8-15 uses GPIO_pe_cfg1
       io_write32(GPIO_pe_cfg1, (io_read32(GPIO_pe_cfg1) & ~GPIO_pe_cfg1_pe12_select)
         | ((v ? 0b0000 : 0b0001) << GPIO_pe_cfg1_pe12_select_SHIFT)); //0000:Input=High 0001:Output=Low
@@ -82,11 +91,18 @@ static void mp_hal_pin_od_write(mp_hal_pin_obj_t p, int v)
 
 static void mp_hal_pin_open_drain(mp_hal_pin_obj_t pin)
 {
-  if(pin != 12 && pin != 13)
-    mp_raise_ValueError(MP_ERROR_TEXT("Not all pins are supported for I2C"));
-
-  //io_write32(GPIO_pe_pull0, (io_read32(GPIO_pe_pull0) & ~(0b11<<(2*p))) | (0b01 << (2*p))); //0b01: pull-up TODO: test if this works
-  mp_hal_pin_od_high(pin);
+  switch(pin)
+  {
+  	case 0:
+  	case 1:
+  	case 12:
+  	case 13:
+		//io_write32(GPIO_pe_pull0, (io_read32(GPIO_pe_pull0) & ~(0b11<<(2*p))) | (0b01 << (2*p))); //0b01: pull-up TODO: test if this works
+		mp_hal_pin_od_high(pin);
+		break;
+  default:
+		mp_raise_ValueError(MP_ERROR_TEXT("Not all pins are supported for I2C"));
+  }
 }
 
 static mp_hal_pin_obj_t mp_hal_get_pin_obj(const mp_obj_t pin_in)
