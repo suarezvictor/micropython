@@ -11,6 +11,8 @@
 
 #ifdef MICROPY_PY_FRAMEBUF
 
+void fb_probe(int W, int H); 
+
 #warning implement cache flushing
 #define video_flush()
 
@@ -18,8 +20,8 @@
 #define vsync_signal() 0
 
 #define VIDEO_FRAMEBUFFER_DEPTH 32
-#define FRAMEBUFFER_WIDTH 640
-#define FRAMEBUFFER_HEIGHT 480
+#define FRAMEBUFFER_WIDTH 1366 //tested: 640x480, 800x600, 1366x768
+#define FRAMEBUFFER_HEIGHT 768
 
 #define VIDEO_ALIGN 0x1000
 
@@ -54,6 +56,7 @@ const mp_obj_type_t f133_video_type;
 
 extern uintptr_t framebuffer_address;
 extern unsigned framebuffer_pitch;
+extern uint32_t framebuffer_io_polarity;
 
 STATIC mp_obj_t f133_video_make_new(const mp_obj_type_t *type_in,
 		size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -66,9 +69,11 @@ STATIC mp_obj_t f133_video_make_new(const mp_obj_type_t *type_in,
 			"not a valid video number: %d", video_num));
     }
 
-    framebuffer_pitch = FRAMEBUFFER_WIDTH*VIDEO_FRAMEBUFFER_DEPTH/8;
-    void fb_probe(void);
-    fb_probe();
+    //init framebuffer, uses framebuffer_address (set in mpmain.c at start of heap)
+    //the function calculates framebuffer_pitch
+    framebuffer_io_polarity = 0b1011; //DE (invert), CLK (no invert), HSYNC (invert), VSYNC (invert)
+    //see https://github.com/torvalds/linux/blob/master/drivers/gpu/drm/sun4i/sun4i_tcon.h#L114
+    fb_probe(FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
 
     f133_video_obj_t *self = m_new_obj(f133_video_obj_t);
     self->base.type = &f133_video_type;
